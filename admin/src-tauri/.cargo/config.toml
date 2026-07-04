@@ -1,8 +1,8 @@
 [env]
 PATH = { value = "C:\\Program Files\\Git\\bin", force = false }
-
-# ponytail: 仅 Windows target 注入；顶层 [env] 会污染 macOS/Linux CI（bindgen 找 libclang 失败）
-[target.x86_64-pc-windows-msvc.env]
-# ffmpeg-next 动态链接：预编译 shared 库根目录（含 include/ lib/ bin/，见 admin/README.md）
+# build script 不读 [target.*.env]，Windows 本地 pnpm tauri build 需顶层 FFMPEG_DIR
 FFMPEG_DIR = "D:\\ffmpeg-dev\\ffmpeg-n8.1-latest-win64-gpl-shared-8.1"
+
+# ponytail: LIBCLANG_PATH 仅 Windows target；顶层会污染 macOS CI bindgen
+[target.x86_64-pc-windows-msvc.env]
 LIBCLANG_PATH = "C:\\Program Files\\LLVM\\bin"
