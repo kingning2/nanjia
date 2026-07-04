@@ -1,6 +1,6 @@
 ---
 name: myapp-ops
-description: 南嘉婚礼项目运维脚本手册——部署微信云函数、发布管理端桌面安装包（打 tag 触发 CI）、构建小程序、灌数据、同步小程序配置。Use when 发布/部署/deploy、发版/打 tag/release、部署云函数、构建小程序 weapp、seed 数据、sync 项目配置。
+description: 南嘉婚礼项目运维脚本手册——部署微信云函数、发布管理端桌面安装包（打 tag 触发 CI）、构建小程序、同步小程序配置、环境诊断。Use when 发布/部署/deploy、发版/打 tag/release、部署云函数、构建小程序 weapp、sync 项目配置、check-test-cf。
 ---
 
 # 南嘉婚礼 · 运维脚本手册
@@ -49,12 +49,10 @@ pnpm build:test:weapp   # test 产物
 pnpm build:weapp        # production 产物（build 前自动 sync 对应环境 project.config）
 ```
 
-## 灌数据 / 诊断
+## 环境诊断
 
 ```bash
-pnpm seed:products                       # 灌产品目录示例数据
-node scripts/diag-portfolio-home.mjs     # 诊断首页数据
-node scripts/check-test-cf.mjs           # 校验 test 环境云函数
+node scripts/check-test-cf.mjs   # 校验 test 环境：账号、网关、7 个云函数是否齐全可调用
 ```
 
 ## 同步小程序配置

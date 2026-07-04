@@ -165,6 +165,24 @@ tcb fn list -e <环境ID>
 3. 技术人员首次构建迁移 sidecar：`pnpm migrate:sidecar`
 4. 管理端同步中心选择来源与目标 →「开始迁移」
 
+## 运维脚本（`scripts/`）
+
+仓库根目录执行。各脚本用途如下：
+
+| 脚本 | 用途 | 典型用法 |
+| --- | --- | --- |
+| `deploy-cloud-functions.mjs` | 按环境 logout → 密钥 login → 部署云函数 | `pnpm deploy:cf:test`；单函数 `--fn portfolioHome` |
+| `sync-project-config.mjs` | 合并 `project.config.{dev\|test\|prod}.json` → `project.config.json` | `pnpm sync:project`；`dev:weapp` / `build:*:weapp` 自动调用 |
+| `taro-build-weapp.mjs` | Taro 小程序构建包装（传入 development / test / production） | `pnpm build:weapp` 等 |
+| `release.mjs` | 升管理端版本号 → 提交 → 推送 → 打 tag（触发 CI 出安装包） | `pnpm release` / `pnpm release minor` |
+| `write-env-from-secrets.mjs` | 从环境变量生成 `.env.test` / `.env.production`（CI 用） | GitHub Actions 自动调用；本地 `--ci` |
+| `publish-admin-update.mjs` | 将 Tauri 更新清单写入 GitHub Release | CI 自动调用 |
+| `tauri-build.mjs` | 跨平台 Tauri release 构建入口 | `cd admin && pnpm tauri:build` |
+| `tauri-dev-windows.ps1` | Windows 本地开发：配置 FFmpeg/LLVM 后启动 `tauri dev` | `cd admin && pnpm dev:desktop` |
+| `setup-ffmpeg-windows.ps1` | 首次下载 Windows FFmpeg shared 库（被 `tauri-dev-windows.ps1` 调用） | 一般无需手动执行 |
+| `bundle-ffmpeg-macos.mjs` + `bundle-ffmpeg-macos.sh` | macOS 打包后嵌入 ffmpeg dylib 并产出 dmg / tar.gz | `tauri-build.mjs` 在 macOS 上自动调用 |
+| `check-test-cf.mjs` | 诊断 test 环境：密钥账号、HTTP 网关、7 个云函数部署与调用 | `node scripts/check-test-cf.mjs` |
+
 ## 提交规范
 
 遵循 Conventional Commits，中文简述，按模块拆分提交。见 [.cursor/rules/git-commit-cn.mdc](./.cursor/rules/git-commit-cn.mdc)。
