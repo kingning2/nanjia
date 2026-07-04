@@ -6,6 +6,17 @@
 
 ## 开发
 
+**Windows**（需 FFmpeg **shared** 库编译 Rust，与 `D:\ffmpeg` 里仅含 exe 的 essentials 版不同）：
+
+```powershell
+cd admin
+pnpm dev:desktop
+```
+
+首次会自动下载 shared 库到 `D:\ffmpeg-dev\`（约 76MB）。`.env.development` 放在**项目根目录**。
+
+**macOS / Linux**：
+
 ```bash
 cd admin
 pnpm tauri dev
