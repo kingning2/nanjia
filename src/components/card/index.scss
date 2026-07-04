@@ -1,0 +1,43 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.card {
+  display: flex;
+  padding: $space-md;
+  border-radius: $radius-lg;
+  background: $color-surface;
+  box-shadow: $shadow-card;
+  gap: $space-md;
+}
+
+.card__cover {
+  flex: 0 0 180px;
+  height: 128px;
+}
+
+.card__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+}
+
+.card__title {
+  font-size: $font-md;
+  font-weight: 600;
+  color: $color-text;
+  @include line-clamp(1);
+}
+
+.card__desc {
+  font-size: $font-sm;
+  color: $color-text-secondary;
+  line-height: 1.4;
+  @include line-clamp(2);
+}
+
+.card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-xs;
+}

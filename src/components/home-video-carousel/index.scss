@@ -1,0 +1,69 @@
+@use '../../styles/variables' as *;
+
+.home-video-carousel {
+  position: relative;
+  width: 100%;
+  height: 53vh;
+  min-height: 420px;
+  overflow: hidden;
+  background: #000;
+}
+
+.home-video-carousel__player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+.home-video-carousel__player--front {
+  z-index: 1;
+  opacity: 1;
+}
+
+.home-video-carousel__player--back {
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.home-video-carousel--empty,
+.home-video-carousel--loading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: linear-gradient(180deg, #1a1714 0%, #000 100%);
+}
+
+.home-video-carousel--loading {
+  align-items: center;
+}
+
+.home-video-carousel__shade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.08) 40%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  pointer-events: none;
+}
+
+.home-video-carousel__tagline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 36px;
+  z-index: 3;
+  padding: 0 40px;
+  text-align: center;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 28px;
+  line-height: 1.45;
+  color: #fff;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}

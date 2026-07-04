@@ -1,0 +1,51 @@
+---
+description: share 共享类型目录规范
+globs: share/**/*
+alwaysApply: false
+---
+
+# 共享类型规范
+
+## 职责
+
+`share/types/` 存放前后端（小程序 + 云函数）共同遵守的 API 契约，是唯一的数据结构真相来源。
+
+## 什么放 share
+
+- 云函数请求参数（`*Params`）
+- 云函数响应 DTO（`*DTO`）
+- 管理端 CRUD / 上传契约（`content.ts`、`upload.ts`、`media.ts`、`database.ts`）
+- 通用响应包装（`CloudFunctionResponse`）
+
+## 什么不放 share
+
+- 小程序 UI 展示模型（如 `ProjectCardItem`）→ `src/types/`
+- 管理端表单/表格状态 → `admin/src/types/`
+- 客户端错误形态（`CloudErrorShape`）→ `src/types/`
+- Taro/组件 Props 类型 → 对应组件或 `src/types/`
+
+## 命名约定
+
+| 后缀 | 含义 | 示例 |
+|------|------|------|
+| `Params` | 请求入参 | `PortfolioHomeParams` |
+| `DTO` | 传输对象 | `PortfolioItemDTO` |
+| 无后缀 | 不在 share 使用 | — |
+
+## 修改流程
+
+1. 先改 `share/types/`
+2. 同步更新云函数返回结构
+3. 更新 `src/adapters/` 映射（若 UI 模型有变）
+4. 前端 service 层类型自动跟随（import 自 `@share/types/*`）
+
+## 导入方式
+
+```typescript
+// 前端
+import { PortfolioHomeDTO } from '@share/types/api'
+import { CloudFunctionResponse } from '@share/types/response'
+
+// 云函数（JSDoc 对齐，不可 import TS）
+/** @typedef {import('../../share/types/api').PortfolioHomeDTO} PortfolioHomeDTO */
+```

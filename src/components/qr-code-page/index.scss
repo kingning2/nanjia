@@ -1,0 +1,51 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.qr-code-page__content {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: $space-xl $space-md $tabbar-float-height;
+  background: $color-bg;
+  color: $color-text;
+}
+
+.qr-code-page__title {
+  display: block;
+  font-size: $font-lg;
+  font-weight: 600;
+  text-align: center;
+}
+
+.qr-code-page__hint {
+  display: block;
+  margin-top: $space-sm;
+  color: $color-text-secondary;
+  font-size: $font-sm;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.qr-code-page__card {
+  @include flex-center;
+  width: 520px;
+  height: 520px;
+  margin: $space-xl auto 0;
+  padding: $space-md;
+  box-sizing: border-box;
+  border-radius: $radius-lg;
+  background: $color-surface;
+  box-shadow: $shadow-card;
+}
+
+.qr-code-page__image {
+  width: 100%;
+  height: 100%;
+}
+
+.qr-code-page__placeholder {
+  padding: $space-md;
+  color: $color-text-secondary;
+  font-size: $font-sm;
+  line-height: 1.6;
+  text-align: center;
+}

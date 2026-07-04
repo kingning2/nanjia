@@ -1,0 +1,133 @@
+@use '../../styles/variables' as *;
+
+.home-category-actions {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 80px;
+  padding: 48px 32px 40px;
+  background: #000;
+}
+
+.home-category-actions--overlay {
+  position: relative;
+  z-index: 1;
+  padding: 0 32px;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.home-category-actions__slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+  color: #fff;
+
+  &:active {
+    opacity: 0.72;
+  }
+}
+
+.home-category-actions__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+}
+
+.home-category-actions__glyph {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+
+.home-category-actions__primary-box {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  width: 34px;
+  height: 24px;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  transform: translateX(-50%);
+}
+
+.home-category-actions__primary-lid {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  width: 40px;
+  height: 10px;
+  border: 2px solid #fff;
+  border-radius: 4px 4px 0 0;
+  transform: translateX(-50%);
+}
+
+.home-category-actions__primary-ribbon {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 2px;
+  height: 30px;
+  background: #fff;
+  transform: translateX(-50%);
+}
+
+.home-category-actions__more-dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+  border-radius: 3px;
+}
+
+.home-category-actions__more-dot--1 {
+  top: 12px;
+  left: 12px;
+}
+
+.home-category-actions__more-dot--2 {
+  top: 12px;
+  right: 12px;
+}
+
+.home-category-actions__more-dot--3 {
+  bottom: 12px;
+  left: 12px;
+}
+
+.home-category-actions__more-dot--4 {
+  right: 12px;
+  bottom: 12px;
+}
+
+.home-category-actions__title-en {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.home-category-actions__title-zh {
+  font-size: 22px;
+  color: $color-text-secondary;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.home-category-actions__desc {
+  max-width: 240px;
+  font-size: $font-xs;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.62);
+  text-align: center;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}

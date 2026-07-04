@@ -1,0 +1,58 @@
+---
+description: Taro 微信小程序前端开发规范
+globs: src/**/*
+alwaysApply: false
+---
+
+# 小程序前端规范
+
+## 页面与组件
+
+- 页面放在 `src/pages/<name>/`，每个页面含 `index.tsx`、`index.scss`、`index.config.ts`
+- 可复用 UI 放 `src/components/<name>/`
+- 使用函数组件 + Hooks，无需 `import React`（已关闭 react-in-jsx-scope）
+- 页面根容器统一用 `PageShell`（内置客服浮球 `ServiceFab` + 调试浮球 `DevDebugFab`）
+
+## 数据流
+
+```
+页面/组件 → services/ → services/cloud/ → 云函数
+                ↓
+           adapters/ → src/types/ 领域模型 → UI
+```
+
+- 页面只调用 `services/` 层，不直接 `callCloudFunction`
+- 云函数 DTO 用 `@share/types/*`，UI 模型用 `src/types/*`
+- 网络错误在 service 层抛出，页面 catch 后展示 `NoticeBar` 或 Toast
+- `callCloudFunction` 失败会自动写入 `dev-error-sink`，成功响应同样自动记录；dev 浮球可查看
+
+## 调试面板（dev/test 构建）
+
+- 开关：`.env.*` 中 `TARO_APP_DEBUG_PANEL=true`
+- 浮球：`src/components/dev-debug-fab/`（可拖动，有报错变红）
+- 页面级数据：`useDevDebug(pageId, title, entries)`，错误项设 `tone: 'error'`
+- 全局云函数错误：`src/utils/dev-error-sink.ts`（`call.ts` 自动上报）
+
+## 样式
+
+- 使用 SCSS，BEM 命名：`block__element--modifier`
+- 设计稿宽度 750，使用 px（Taro 自动转换）
+- 全局变量/混入：`src/styles/variables.scss`、`src/styles/mixins.scss`
+- NutUI 主题：`src/styles/nutui-theme.scss`
+
+## Taro API
+
+- 路由：`Taro.navigateTo` / `Taro.redirectTo` / `Taro.reLaunch`
+- 生命周期：优先 `useDidShow`、`useReachBottom` 等 Hooks
+- 云开发：通过 `src/services/cloud/init.ts` 初始化，不在页面重复 init
+
+## 示例
+
+```tsx
+// ✅ 页面调用 service，使用领域模型
+const result = await getPortfolioHome()
+setCarouselVideos(result.data.carouselVideos)
+
+// ❌ 页面直接调云函数或引用 DTO
+const res = await callCloudFunction('portfolioHome', params)
+```

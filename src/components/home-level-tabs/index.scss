@@ -1,0 +1,13 @@
+@use '../../styles/variables' as *;
+
+.home-level-tabs {
+  margin-top: $space-md;
+}
+
+.home-level-tabs__l1 {
+  margin-bottom: $space-sm;
+}
+
+.home-level-tabs__l2 .nut-tabs-titles {
+  background: transparent;
+}

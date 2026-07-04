@@ -1,0 +1,100 @@
+:root {
+  font-family: Inter, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #1f2937;
+  background: #f5f7fb;
+  --scrollbar-size: 8px;
+  --scrollbar-thumb: rgba(200, 169, 110, 0.45);
+  --scrollbar-thumb-hover: rgba(168, 139, 92, 0.8);
+  --scrollbar-track: transparent;
+}
+
+/* 细滚动条 + 稳定占位，避免滚动条出现/消失时挤压内容宽度 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  background: #f5f7fb;
+}
+
+#root {
+  min-height: 100%;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #f5f7fb;
+}
+
+.app-shell-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.app-shell-body .ant-pro-layout {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+.ant-pro-layout {
+  height: 100%;
+  overflow: hidden;
+}
+
+.ant-pro-layout-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+/* 弹窗打开时锁定主内容区，滚动仅发生在 modal body 内 */
+body:has(.ant-modal-mask) .ant-pro-layout-content {
+  overflow: hidden;
+}
+
+.content-form-modal .ant-modal-body {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}

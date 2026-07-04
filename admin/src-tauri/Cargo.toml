@@ -1,0 +1,49 @@
+[package]
+name = "nanjia-beauty-admin"
+version = "0.1.4"
+description = "南嘉婚礼策划工作室管理端"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+name = "tauri_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-updater = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "blocking"] }
+tokio = { version = "1", features = ["rt-multi-thread"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp", "bmp"] }
+webp = "0.3"
+fast_image_resize = "5.3"
+dotenvy = "0.15"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+base64 = "0.22"
+percent-encoding = "2.3"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+# 三端统一动态链接 ffmpeg：macOS/Linux 走系统 pkg-config，Windows 用预编译 shared 库（设 FFMPEG_DIR，见 admin/README.md）
+ffmpeg-next = { version = "8.1", default-features = false, features = ["codec", "format", "software-scaling", "software-resampling"] }
+dirs = "5"
+
+[lints.rust]
+warnings = "deny"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tauri_unstable)'] }
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "allow", priority = -1 }
+too_many_arguments = "allow"
+type_complexity = "allow"

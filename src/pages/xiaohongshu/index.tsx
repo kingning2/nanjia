@@ -1,0 +1,74 @@
+import { Image, Text, View } from '@tarojs/components'
+import Taro, { useDidShow } from '@tarojs/taro'
+import { useCallback, useRef, useState } from 'react'
+import { adaptSocialConfig } from '@/adapters/social'
+import { SocialConfigDTO } from '@share/types/api'
+import CustomHeader from '../../components/custom-header'
+import PageShell from '../../components/page-shell'
+import RouteTabbar from '../../components/route-tabbar'
+import { getSocialConfig } from '../../services/cloud/social'
+import { useMiniShare } from '../../hooks/useMiniShare'
+import { SocialPageConfig } from '../../types/social'
+import { previewCloudImage } from '../../utils/preview-image'
+import './index.scss'
+
+const defaultPage = adaptSocialConfig({
+  xiaohongshu: { qrUrl: '', hint: '长按识别二维码，关注我们的小红书' },
+  douyin: { qrUrl: '', hint: '长按识别二维码，关注我们的抖音' }
+} satisfies SocialConfigDTO).xiaohongshu
+
+export default function XiaohongshuPage() {
+  useMiniShare()
+
+  const loadingRef = useRef(false)
+  const [page, setPage] = useState<SocialPageConfig>(defaultPage)
+
+  const loadPage = useCallback(async () => {
+    if (loadingRef.current) return
+    loadingRef.current = true
+    try {
+      const data = await getSocialConfig()
+      setPage(data.xiaohongshu)
+    } catch {
+      Taro.showToast({ title: '加载失败', icon: 'none' })
+    } finally {
+      loadingRef.current = false
+    }
+  }, [])
+
+  useDidShow(() => {
+    void loadPage()
+  })
+
+  const handlePreview = useCallback(async () => {
+    if (!page.qrUrl) return
+    previewCloudImage(page.qrUrl, 'qr-preview-xhs').catch(() => {
+      Taro.showToast({ title: '预览失败', icon: 'none' })
+    })
+  }, [page.qrUrl])
+
+  return (
+    <PageShell className='xiaohongshu-page'>
+      <CustomHeader title='小红书' showBack={false} compact />
+      <View className='qr-code-page__content'>
+        <Text className='qr-code-page__hint'>{page.hint}</Text>
+        <View className='qr-code-page__card'>
+          {page.qrUrl ? (
+            <Image
+              className='qr-code-page__image'
+              src={page.qrUrl}
+              mode='widthFix'
+              showMenuByLongpress
+              onClick={handlePreview}
+            />
+          ) : (
+            <Text className='qr-code-page__placeholder'>
+              请在管理端「系统设置 → 社交页」上传小红书二维码
+            </Text>
+          )}
+        </View>
+      </View>
+      <RouteTabbar />
+    </PageShell>
+  )
+}

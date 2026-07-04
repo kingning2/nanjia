@@ -1,0 +1,132 @@
+.coverStrip {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.coverPane {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.arrow {
+  flex: 0 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  color: rgba(0, 0, 0, 0.35);
+  font-size: 20px;
+}
+
+.panelImageWrap {
+  width: 100%;
+  height: 136px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #f5f5f5;
+  overflow: hidden;
+}
+
+.panelImage {
+  max-width: 100%;
+  max-height: 136px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.panelImageWrap :global(.ant-image) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.panelImageWrap :global(.ant-image-img) {
+  max-width: 100%;
+  max-height: 136px;
+  object-fit: contain;
+}
+
+.panelPlaceholder {
+  width: 100%;
+  height: 136px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.uploadWrap {
+  display: block;
+  width: 100%;
+}
+
+.uploadWrap :global(.ant-upload-wrapper),
+.uploadWrap :global(.ant-upload) {
+  display: block !important;
+  width: 100% !important;
+}
+
+.replaceSlot {
+  width: 100%;
+  height: 136px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.replaceSlot:hover {
+  border-color: #1677ff;
+}
+
+.paneTitle {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.meta {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compressingPane {
+  width: 100%;
+  height: 136px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+@media (max-width: 768px) {
+  .coverStrip {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .arrow {
+    transform: rotate(90deg);
+    align-self: center;
+    padding: 4px 0;
+  }
+}

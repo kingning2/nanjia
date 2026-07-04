@@ -1,0 +1,44 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.splash-video {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(165deg, $color-surface 0%, $color-bg 100%);
+}
+
+.splash-video__player {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  background: $color-surface;
+}
+
+.splash-video__cover {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(165deg, $color-surface-soft 0%, $color-surface 50%, $color-bg 100%);
+}
+
+.splash-video__actions {
+  position: absolute;
+  right: $space-lg;
+  bottom: calc(#{$space-xl} + env(safe-area-inset-bottom));
+  z-index: 2;
+}
+
+.splash-video__skip {
+  --nutui-button-xlarge-font-size: #{$font-md};
+  --nutui-button-xlarge-height: 72px;
+  min-width: 200px;
+  padding: 0 $space-xl;
+
+  .nut-button-xlarge-children {
+    font-size: $font-md;
+  }
+}

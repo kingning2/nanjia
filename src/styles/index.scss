@@ -1,0 +1,9 @@
+@use './variables' as *;
+@use './mixins' as *;
+@use './nutui-theme';
+
+page {
+  background: $color-bg;
+  color: $color-text;
+  font-size: $font-sm;
+}

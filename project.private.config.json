@@ -1,0 +1,83 @@
+{
+  "libVersion": "3.16.1",
+  "projectname": "nanjia-beauty",
+  "setting": {
+    "urlCheck": true,
+    "coverView": false,
+    "lazyloadPlaceholderEnable": false,
+    "skylineRenderEnable": false,
+    "preloadBackgroundData": false,
+    "autoAudits": false,
+    "useApiHook": true,
+    "showShadowRootInWxmlPanel": false,
+    "useStaticServer": false,
+    "useLanDebug": false,
+    "showES6CompileOption": false,
+    "compileHotReLoad": true,
+    "checkInvalidKey": true,
+    "ignoreDevUnusedFiles": true,
+    "bigPackageSizeSupport": false
+  },
+  "condition": {
+    "miniprogram": {
+      "list": [
+        {
+          "name": "pages/more-services/index",
+          "pathName": "pages/more-services/index",
+          "query": "excludeCategoryId=cat-wedding",
+          "scene": null,
+          "launchMode": "default"
+        },
+        {
+          "name": "pages/category-projects/index",
+          "pathName": "pages/category-projects/index",
+          "query": "categoryId=cat-wedding",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "pages/project-detail/index",
+          "pathName": "pages/project-detail/index",
+          "query": "id=proj-wedding-01",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "pages/products/index",
+          "pathName": "pages/products/index",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "pages/contact/index",
+          "pathName": "pages/contact/index",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "pages/xiaohongshu/index",
+          "pathName": "pages/xiaohongshu/index",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "pages/home/index",
+          "pathName": "pages/home/index",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "pages/splash/index",
+          "pathName": "pages/splash/index",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        }
+      ]
+    }
+  }
+}

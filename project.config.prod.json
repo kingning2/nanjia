@@ -1,0 +1,35 @@
+{
+  "miniprogramRoot": "./dist",
+  "projectname": "nanjia-beauty-prod",
+  "description": "南嘉婚礼策划工作室（生产环境）",
+  "appid": "wx9fcf15896469bb83",
+  "setting": {
+    "urlCheck": true,
+    "es6": false,
+    "enhance": false,
+    "compileHotReLoad": false,
+    "postcss": true,
+    "minified": true,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "uglifyFileName": true,
+    "uploadWithSourceMap": false,
+    "packNpmManually": false,
+    "swc": true,
+    "disableSWC": false,
+    "compileWorklet": false,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "ignoreDevUnusedFiles": true,
+    "checkInvalidKey": true
+  },
+  "packOptions": {
+    "ignore": [
+      {
+        "type": "suffix",
+        "value": ".map"
+      }
+    ]
+  },
+  "compileType": "miniprogram"
+}

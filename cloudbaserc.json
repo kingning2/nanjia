@@ -1,0 +1,69 @@
+{
+  "envId": "cloud1-d1g5g7w9ia1da4f25",
+  "functionRoot": "cloud/functions",
+  "functions": [
+    {
+      "name": "portfolioHome",
+      "handler": "index.main",
+      "runtime": "Nodejs16.13",
+      "timeout": 20,
+      "memorySize": 256,
+      "installDependency": true,
+      "ignore": ["node_modules/**", ".git/**"]
+    },
+    {
+      "name": "splashConfig",
+      "handler": "index.main",
+      "runtime": "Nodejs16.13",
+      "timeout": 20,
+      "memorySize": 256,
+      "installDependency": true,
+      "ignore": ["node_modules/**", ".git/**"]
+    },
+    {
+      "name": "contactConfig",
+      "handler": "index.main",
+      "runtime": "Nodejs16.13",
+      "timeout": 20,
+      "memorySize": 256,
+      "installDependency": true,
+      "ignore": ["node_modules/**", ".git/**"]
+    },
+    {
+      "name": "socialConfig",
+      "handler": "index.main",
+      "runtime": "Nodejs16.13",
+      "timeout": 20,
+      "memorySize": 256,
+      "installDependency": true,
+      "ignore": ["node_modules/**", ".git/**"]
+    },
+    {
+      "name": "projectDetail",
+      "handler": "index.main",
+      "runtime": "Nodejs16.13",
+      "timeout": 20,
+      "memorySize": 256,
+      "installDependency": true,
+      "ignore": ["node_modules/**", ".git/**"]
+    },
+    {
+      "name": "materialCardDetail",
+      "handler": "index.main",
+      "runtime": "Nodejs16.13",
+      "timeout": 20,
+      "memorySize": 256,
+      "installDependency": true,
+      "ignore": ["node_modules/**", ".git/**"]
+    },
+    {
+      "name": "productCatalog",
+      "handler": "index.main",
+      "runtime": "Nodejs16.13",
+      "timeout": 20,
+      "memorySize": 256,
+      "installDependency": true,
+      "ignore": ["node_modules/**", ".git/**"]
+    }
+  ]
+}

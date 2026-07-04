@@ -1,0 +1,68 @@
+@use '../../styles/variables' as *;
+
+.material-card-detail-page {
+  height: 100vh;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: $color-bg;
+  color: $color-text;
+}
+
+.material-card-detail-page__scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.material-card-detail-page__inner {
+  padding: $space-md $space-md $space-xl;
+}
+
+.material-card-detail-page__block + .material-card-detail-page__block {
+  margin-top: $space-lg;
+  padding-top: $space-lg;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.material-card-detail-page__title {
+  display: block;
+  margin-bottom: $space-sm;
+  font-size: $font-md;
+  font-weight: 600;
+}
+
+.material-card-detail-page__content {
+  display: block;
+  color: $color-text-secondary;
+  font-size: $font-sm;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.material-card-detail-page__image {
+  width: 100%;
+  margin-top: $space-md;
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+}
+
+.material-card-detail-page__image-item {
+  width: 100%;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.material-card-detail-page__image-photo {
+  width: 100%;
+  display: block;
+}
+
+.material-card-detail-page__loading,
+.material-card-detail-page__empty {
+  padding: $space-xl 0;
+  display: flex;
+  justify-content: center;
+}

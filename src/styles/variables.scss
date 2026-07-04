@@ -1,0 +1,32 @@
+// 暖调编辑风暗底：衬托婚礼成片，避免冷灰科技感和高饱和色
+$color-bg: #100e0d;
+$color-surface: #1a1714;
+$color-surface-soft: #262220;
+$color-text: #faf7f2;
+$color-text-secondary: #c9bfb3;
+$color-primary: #c8a96e;
+$color-primary-deep: #a88b5c;
+$color-on-primary: #2a221c;
+$color-success: #6b8f71;
+$color-warning: #c49a6c;
+$color-border: #3a3530;
+$color-mask: rgba(16, 14, 13, 0.72);
+
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+
+$space-xs: 8px;
+$space-sm: 12px;
+$space-md: 16px;
+$space-lg: 20px;
+$space-xl: 24px;
+
+$font-xs: 22px;
+$font-sm: 24px;
+$font-md: 28px;
+$font-lg: 32px;
+
+$shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
+
+$tabbar-float-height: calc(120px + env(safe-area-inset-bottom));

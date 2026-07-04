@@ -1,0 +1,3 @@
+# sidecar 由 pnpm migrate:sidecar 生成，勿手改
+*
+!.gitignore

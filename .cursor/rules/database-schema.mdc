@@ -1,0 +1,175 @@
+---
+description: 微信云开发数据库集合结构、四级菜单层级与 TypeScript 契约映射
+alwaysApply: true
+---
+
+# 云数据库集合结构（四级菜单）
+
+数据库类型：**微信云开发文档型数据库（NoSQL）**。集合名见 `share/types/database.ts`，契约见 `share/types/content.ts`。
+
+## 层级关系
+
+```
+L1 categories（分类）
+ └── L2 projects（项目：图片 + 描述）
+      └── L3 material_cards（素材卡片：标题 + 图片）
+           └── L4 material_details（素材详情：表单字段）
+
+home_settings（系统设置，单文档）── 首页轮播/配图、启动页、联系页、社交页
+media_files（媒体库）── 被各级 cover / images 引用
+```
+
+## 排序规则（全局）
+
+- **L1～L4 每一级都有 `sort` 字段，必填**，数字越小越靠前
+- 查询列表：默认 `orderBy('sort', 'asc')`
+- 管理端：每一级列表支持拖拽/输入序号调整排序
+- **L4 详情内多图**：`images` 为对象数组，每项含 `image` + `sort`，同样越小越靠前；保存前按 `sort` 排序
+
+## 集合总览
+
+| 层级 | 集合 | 常量 |
+|------|------|------|
+| L1 | `categories` | `CATEGORIES_COLLECTION` |
+| L2 | `projects` | `PROJECTS_COLLECTION` |
+| L3 | `material_cards` | `MATERIAL_CARDS_COLLECTION` |
+| L4 | `material_details` | `MATERIAL_DETAILS_COLLECTION` |
+| — | `home_settings` | `HOME_SETTINGS_COLLECTION` |
+| — | `media_files` | `MEDIA_FILES_COLLECTION` |
+
+修改字段：**先改本规则 + `share/types/content.ts`，再改 Rust / 云函数 / 管理端**。
+
+---
+
+## L1 `categories`（分类）
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `_id` | string | 自动 | 文档 ID |
+| `name` | string | ✅ | 分类名称 |
+| `titleEn` | string | | 首页主营 CTA 英文标题 |
+| `titleZh` | string | | 首页主营 CTA 中文标题，留空回退 `name` |
+| `desc` | string | | 描述 |
+| `sort` | number | ✅ | 排序权重 |
+| `published` | boolean | | 是否展示 |
+| `createdAt` / `updatedAt` | string | | ISO 8601 |
+
+---
+
+## L2 `projects`（项目）
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `_id` | string | 自动 | 文档 ID |
+| `categoryId` | string | ✅ | 所属分类 |
+| `title` | string | ✅ | 标题 |
+| `cover` | string | ✅ | 封面图（产品列表缩略图） |
+| `images` | `MaterialDetailImage[]` | | 详情页顶部广告轮播，按 `sort` 排序；留空时回退 `cover` |
+| `desc` | string | | 描述 |
+| `price` | number | | 展示价（元），产品页列表展示 |
+| `sort` | number | ✅ | 排序权重 |
+| `published` | boolean | | 是否展示 |
+| `createdAt` / `updatedAt` | string | | ISO 8601 |
+
+---
+
+## L3 `material_cards`（素材卡片）
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `_id` | string | 自动 | 文档 ID |
+| `projectId` | string | ✅ | 所属项目 |
+| `title` | string | ✅ | 卡片标题 |
+| `cover` | string | ✅ | 封面图 |
+| `sort` | number | ✅ | 排序权重 |
+| `published` | boolean | | 是否展示 |
+| `createdAt` / `updatedAt` | string | | ISO 8601 |
+
+---
+
+## L4 `material_details`（素材详情 · 仅表单）
+
+不用富文本编辑器，管理端用 **ProForm** 填写即可。
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `_id` | string | 自动 | 文档 ID |
+| `cardId` | string | ✅ | 所属素材卡片 |
+| `title` | string | ✅ | 标题（Input） |
+| `content` | string | ✅ | 正文（TextArea） |
+| `images` | `MaterialDetailImage[]` | | 多图，见下表 |
+| `sort` | number | ✅ | 详情条目排序（同一卡片下多条详情时） |
+| `createdAt` / `updatedAt` | string | | ISO 8601 |
+
+### `images[]` 子结构（可排序多图）
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `image` | string | ✅ | `fileID` 或 URL |
+| `sort` | number | ✅ | 图内排序，越小越靠前 |
+
+示例：
+
+```json
+{
+  "title": "方案说明",
+  "content": "正文内容……",
+  "images": [
+    { "image": "cloud://xxx/a.webp", "sort": 0 },
+    { "image": "cloud://xxx/b.webp", "sort": 1 }
+  ],
+  "sort": 0
+}
+```
+
+---
+
+## `home_settings`（系统设置 · 单文档）
+
+首页轮播、启动页、联系页、社交页等全局配置，契约见 `HomeSettingsDTO`。
+
+| 字段组 | 主要字段 | 说明 |
+|--------|---------|------|
+| 首页顶部 | `heroMediaType`（`video` / `image`）、`videos[]`、`heroImages[]`、`heroCarouselInterval` | 顶部轮播模式：视频多段轮播，或图片轮播（可设自动切换秒数） |
+| 首页配图 | `images[]`（`image` + `sort`） | 轮播下方纵向展示配图 |
+| 首页主营 | `primaryCategoryId` | 首页主营入口，关联 L1 分类（CTA 标题取该分类 `titleEn`/`titleZh`） |
+| 启动页 | `splashVideo`、`splashSkipSeconds` | 全屏视频与跳过倒计时 |
+| 联系页 | `contactStoreName`、`contactAddress`、`contactPhone`、`contactWechatQr` 等 | 门店信息 |
+| 社交页 | `xiaohongshuQr`、`douyinQr` 等 | 二维码与提示文案 |
+| 上传 | `videoCompressEnabled`、`defaultVideoCompressPreset` | 管理端视频压缩开关 |
+
+---
+
+## `media_files`（媒体库）
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `fileID` | string | ✅ | 云存储文件 ID |
+| `cloudPath` | string | ✅ | COS 路径 |
+| `downloadUrl` | string | | 临时 URL |
+| `originalName` | string | ✅ | 原始文件名 |
+| `mimeType` | string | ✅ | `image/webp` |
+| `createdAt` | string | ✅ | ISO 8601 |
+
+---
+
+## 外键关系
+
+```
+categories._id → projects.categoryId → material_cards.projectId → material_details.cardId
+```
+
+## 管理端表单约定
+
+| 层级 | 表单要点 |
+|------|----------|
+| L1 | 名称 + **sort 序号或拖拽排序** |
+| L2～L3 | 名称/标题 + 封面 + **sort 序号或拖拽排序** |
+| L4 | `ProFormText` title、`ProFormTextArea` content、`ProForm` 多图上传 + **图片拖拽排序** |
+| 首页设置 | 顶部轮播模式（视频/图片）、轮播视频或轮播图、自动切换间隔、首页配图、首页主营分类、启动页视频、联系/社交字段 |
+
+## 新建集合检查清单
+
+- [ ] 创建六个集合（含 `home_settings`）
+- [ ] 各级文档写入时 **必须带 sort**
+- [ ] L4 的 `images` 使用 `{ image, sort }` 结构，禁止仅用无序 `string[]`

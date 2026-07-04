@@ -1,0 +1,87 @@
+---
+description: 南嘉婚礼策划工作室（Nanjia Beauty）项目通用规范：目录结构、命名、共享类型与提交约定
+alwaysApply: true
+---
+
+# 项目通用规范
+
+## 技术栈
+
+- 小程序：Taro 4 + React 18 + TypeScript + Sass + NutUI（微信小程序）
+- 管理端：Tauri 2 + React + TypeScript（`admin/`），CloudBase Node SDK 经 Rust invoke 直连
+- 云端：微信云开发云函数（`cloud/functions/`）
+- 包管理：pnpm workspace（根目录 + `admin/`）
+
+## 目录结构
+
+```
+nanjia-beauty/
+├── share/types/       # 小程序 + 云函数 + 管理端 共享 DTO（@share/*）
+├── src/               # 小程序前端（@/*）
+│   ├── pages/         # splash / home / products / contact / …
+│   ├── components/    # page-shell、dev-debug-fab、service-fab 等
+│   ├── services/cloud/
+│   ├── adapters/
+│   ├── store/         # api-cache 等
+│   ├── hooks/         # useDevDebug 等
+│   └── styles/
+├── admin/             # Tauri 管理端（已初始化）
+│   ├── src/pages/     # categories / projects / home-settings / …
+│   └── src-tauri/     # Rust 后端（密钥、SDK 调用）
+├── cloud/functions/   # 云函数（每函数一个目录）
+├── config/            # Taro 构建配置
+└── types/             # 全局类型声明（global.d.ts）
+```
+
+## 小程序页面
+
+| 页面 | 路径 | 主要云函数 |
+|------|------|-----------|
+| 启动页 | `pages/splash` | `splashConfig` |
+| 首页 | `pages/home` | `portfolioHome` |
+| 产品 | `pages/products` | `productCatalog` |
+| 项目详情 | `pages/project-detail` | `projectDetail` |
+| 素材详情 | `pages/material-card-detail` | `materialCardDetail` |
+| 联系 | `pages/contact` | `contactConfig` |
+| 小红书 / 抖音 | `pages/xiaohongshu`、`pages/douyin` | `socialConfig` |
+
+## 云函数列表
+
+`portfolioHome` · `splashConfig` · `contactConfig` · `socialConfig` · `projectDetail` · `materialCardDetail` · `productCatalog`
+
+## 类型分层
+
+| 位置 | 用途 | 命名 |
+|------|------|------|
+| `share/types/` | API 契约，三端共用 | `*DTO`、`*Params` |
+| `src/types/` | 小程序 UI/领域模型 | 无 DTO 后缀 |
+| `admin/src/types/` | 管理端表单/表格状态 | 无 DTO 后缀 |
+| `src/adapters/` | DTO → 领域模型映射 | `adapt*` |
+
+新增 API 时：先在 `share/types/` 定义契约，云函数按契约返回，前端通过 adapter 转换。
+
+云数据库集合结构见 `database-schema.mdc`（四级内容 + `home_settings` + `media_files`）。
+
+## 导入别名
+
+- `@/*` → `src/*`
+- `@share/*` → `share/*`
+
+## 环境变量
+
+| 变量 | 用途 |
+|------|------|
+| `TARO_APP_CLOUD_ENV_ID` | 小程序 + 管理端云环境 ID（各环境见 `.env.development` 等） |
+| `TARO_APP_BUILD_ENV` | `development` / `test` / `production` |
+| `TARO_APP_DEBUG_PANEL` | `true` 时显示 dev 调试浮球 |
+| `CLOUDBASE_SECRET_ID` / `CLOUDBASE_SECRET_KEY` | 管理端 CAM 密钥（写在项目根各环境 `.env.*`，仅 src-tauri 读取） |
+
+## 提交规范
+
+使用 Conventional Commits（commitlint 已配置）：`feat:`、`fix:`、`refactor:` 等。
+
+## 安全
+
+- **勿提交** `.env.development` / `.env.test` / `.env.production`（仅 `.env.*.example` 入库）
+- CI 打包通过 **GitHub Secrets** + `scripts/write-env-from-secrets.mjs` 生成环境文件
+- 管理端 SecretId/SecretKey 写在项目根各环境 `.env.*`，仅 src-tauri 读取，不进 React 前端

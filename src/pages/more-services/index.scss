@@ -1,0 +1,12 @@
+@use '../../styles/catalog-grid';
+@use '../../styles/variables' as *;
+
+.more-services-page__head {
+  flex-shrink: 0;
+  padding: 0 $space-md $space-sm;
+}
+
+.catalog-section__anchor {
+  height: 1px;
+  width: 100%;
+}

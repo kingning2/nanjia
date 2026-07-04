@@ -1,0 +1,136 @@
+@use '../../styles/variables' as *;
+
+.project-detail-page {
+  height: 100vh;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: $color-bg;
+  color: $color-text;
+}
+
+.project-detail-page__scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.project-detail-page__info {
+  padding: $space-lg $space-md $space-md;
+}
+
+.project-detail-page__title {
+  display: block;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.project-detail-page__desc {
+  display: block;
+  margin-top: $space-sm;
+  color: $color-text-secondary;
+  font-size: $font-sm;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.project-detail-page__price {
+  display: block;
+  margin-top: $space-md;
+  color: $color-primary;
+}
+
+.project-detail-page__price-note {
+  display: block;
+  margin-top: $space-md;
+  color: $color-text-secondary;
+  font-size: $font-sm;
+}
+
+.project-detail-page__divider {
+  margin: 0 $space-md;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.project-detail-page__materials {
+  padding: $space-lg $space-md calc(#{$space-xl} + env(safe-area-inset-bottom));
+}
+
+.project-detail-page__section-title {
+  display: block;
+  margin-bottom: $space-md;
+  font-size: $font-xs;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $color-text-secondary;
+}
+
+.project-detail-page__material-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $space-md;
+}
+
+.project-detail-page__material-card {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: $radius-md;
+  background: $color-surface;
+}
+
+.project-detail-page__material-cover-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: $color-surface-soft;
+}
+
+.project-detail-page__material-image {
+  width: 100%;
+  height: 100%;
+}
+
+.project-detail-page__material-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-secondary;
+  font-size: $font-xs;
+  background: $color-surface-soft;
+}
+
+.project-detail-page__material-body {
+  padding: $space-sm $space-sm calc(#{$space-sm} + 2px);
+}
+
+.project-detail-page__material-title {
+  display: block;
+  font-size: $font-sm;
+  font-weight: 500;
+  line-height: 1.4;
+  color: $color-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.project-detail-page__materials-empty {
+  padding: $space-xl 0;
+}
+
+.project-detail-page__loading,
+.project-detail-page__empty {
+  padding: $space-xl 0;
+  display: flex;
+  justify-content: center;
+}

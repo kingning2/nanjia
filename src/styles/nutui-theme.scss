@@ -1,0 +1,19 @@
+@use './variables' as *;
+
+:root,
+page {
+  --nutui-color-primary: #{$color-primary};
+  --nutui-color-primary-stop-1: #{$color-primary};
+  --nutui-color-primary-stop-2: #{$color-primary-deep};
+  --nutui-color-primary-pressed: #{$color-primary-deep};
+  --nutui-button-primary-color: #{$color-on-primary};
+  --nutui-color-text: #{$color-text};
+  --nutui-color-text-help: #{$color-text-secondary};
+  --nutui-color-background: #{$color-bg};
+  --nutui-color-mask: #{$color-mask};
+  --nutui-tabs-titles-item-active-color: #{$color-primary};
+  --nutui-tabs-titles-background-color: #{$color-surface};
+  --nutui-tabs-titles-item-color: #{$color-text-secondary};
+  --nutui-font-size-2: #{$font-sm};
+  --nutui-font-size-3: #{$font-md};
+}

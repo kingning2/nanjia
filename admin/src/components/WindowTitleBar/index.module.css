@@ -1,0 +1,84 @@
+.bar {
+  position: relative;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-bottom: 1px solid #f0f0f0;
+  user-select: none;
+}
+
+.drag {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 16px;
+  gap: 10px;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.logo {
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  letter-spacing: 0.02em;
+}
+
+.envMeta {
+  margin-left: 4px;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.envTag {
+  margin: 0;
+  line-height: 20px;
+}
+
+.billing {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+
+.controls {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: #4b5563;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.control:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.controlClose:hover {
+  background: #e81123;
+  color: #ffffff;
+}

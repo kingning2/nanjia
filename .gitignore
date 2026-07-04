@@ -1,0 +1,19 @@
+dist/
+deploy_versions/
+.temp/
+.rn_temp/
+node_modules/
+.DS_Store
+cloud/functions/*/cf-shared/
+.swc
+*.local
+
+# admin 管理端
+admin/.env
+admin/.env.local
+admin/src-tauri/target/
+
+.env.development
+.env.test
+.env.production
+.codegraph

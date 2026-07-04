@@ -1,0 +1,11 @@
+@use '../../styles/catalog-grid';
+@use '../../styles/variables' as *;
+
+.category-projects-page__head {
+  flex-shrink: 0;
+  padding: 0 $space-md $space-sm;
+}
+
+.category-projects-page__empty {
+  padding: $space-xl 0;
+}

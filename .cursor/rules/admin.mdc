@@ -1,0 +1,79 @@
+---
+description: Tauri 管理端开发规范，CloudBase Node SDK 直连
+globs: admin/**/*
+alwaysApply: false
+---
+
+# 管理端（Admin）规范
+
+## 技术栈
+
+- UI：React + TypeScript + Ant Design Pro Components
+- 桌面壳：Tauri 2.x
+- 云端：**@cloudbase/node-sdk** 直连（云存储、云数据库）
+
+## 数据流
+
+```
+React 页面 → services/content/ → invoke(Tauri Command) → src-tauri/commands
+                                                              ↓
+                                                    @cloudbase/node-sdk
+                                                              ↓
+                                              云存储 / 云数据库
+```
+
+- 前端 **禁止** 持有 SecretId/SecretKey
+- 图片/视频上传走 SDK `uploadFile`，不经过云函数中转
+- 内容 CRUD：`services/content/` → Tauri invoke → `cloud/content.rs`
+- DTO 从 `@share/types/content`、`@share/types/upload` 引入
+
+## 管理端页面
+
+| 页面 | 路径 | 管理内容 |
+|------|------|---------|
+| 分类 | `pages/categories` | L1 categories |
+| 项目 | `pages/projects` | L2 projects |
+| 素材卡片 | `pages/material-cards` | L3 material_cards |
+| 素材详情 | `pages/material-details` | L4 material_details |
+| 首页设置 | `pages/home-settings` | home_settings（轮播视频、配图、启动页、联系/社交） |
+
+## 四级内容与排序
+
+- 结构见 `database-schema.mdc`（L1 分类 → L2 项目 → L3 素材卡片 → L4 素材详情）
+- **每一级列表必须支持 sort 排序**（拖拽或序号输入，写入 `sort` 字段）
+- **L4 素材详情仅用 ProForm 表单**：`title` + `content` + 多图；不用富文本
+- L4 多图使用 `MaterialDetailImageDTO[]`（`{ image, sort }`），上传后支持拖拽调整图片顺序
+
+## 目录约定
+
+| 目录 | 用途 |
+|------|------|
+| `admin/src/pages/` | 管理页面 |
+| `admin/src/services/cloud/` | 封装 Tauri invoke（上传等） |
+| `admin/src/services/content/` | 内容 CRUD invoke |
+| `admin/src/components/` | 可复用表单/上传组件 |
+| `admin/src-tauri/src/cloud/` | Rust SDK 调用 |
+
+## 图片/视频上传
+
+1. UI 选文件 → 传本地路径给 Tauri Command
+2. Rust 层读文件 → `app.uploadFile({ cloudPath, fileContent })`
+3. 返回 `UploadImageResultDTO`，再写入云数据库
+
+格式限制见 `share/types/upload.ts`：`UPLOAD_IMAGE_MIME_ALLOW`。转 WebP 后大小上限 10MB，**仅 Rust 端**在 `storage.rs` 校验。
+
+## 开发
+
+```bash
+cd admin && pnpm tauri dev
+```
+
+详见 `admin/README.md`（含 FFmpeg/vcpkg 视频压缩配置）。
+
+## tsconfig 路径
+
+```json
+"paths": { "@share/*": ["../share/*"] }
+```
+
+路径别名已在 `admin/tsconfig.json` 和 `admin/vite.config.ts` 配置。

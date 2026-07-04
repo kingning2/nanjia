@@ -1,0 +1,37 @@
+@use 'sass:color';
+@use '../../styles/variables' as *;
+
+.service-fab__area {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.service-fab__movable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  height: 104px;
+  pointer-events: auto;
+}
+
+.service-fab__btn {
+  display: flex;
+  width: 72px;
+  height: 72px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color.change($color-primary, $alpha: 0.94);
+  box-shadow:
+    0 0 0 14px color.change($color-primary, $alpha: 0.2),
+    0 8px 24px color.change($color-bg, $alpha: 0.35);
+}
+
+.service-fab__icon {
+  width: 40px;
+  height: 40px;
+}

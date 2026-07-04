@@ -1,0 +1,6 @@
+@use '../../styles/variables' as *;
+
+.nut-tabs__titles {
+  border-radius: $radius-md;
+  overflow: hidden;
+}

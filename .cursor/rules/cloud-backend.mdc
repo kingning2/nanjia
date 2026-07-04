@@ -1,0 +1,52 @@
+---
+description: 微信云开发云函数（后台）规范
+globs: cloud/**/*
+alwaysApply: false
+---
+
+# 云函数（后台）规范
+
+## 目录与命名
+
+- 每个云函数一个目录：`cloud/functions/<functionName>/`
+- 入口文件：`index.js`（微信云端部署，保持 JS）
+- 函数名与前端 `callCloudFunction(name)` 保持一致
+
+## 响应契约
+
+所有云函数必须返回 `CloudFunctionResponse` 结构（定义见 `share/types/response.ts`）：
+
+```js
+// ✅ 成功
+return {
+  code: 0,
+  message: 'ok',
+  traceId,
+  data: { /* 业务数据，类型见 share/types/api.ts */ }
+}
+
+// ✅ 失败
+return {
+  code: 1,
+  message: err.message || '操作失败',
+  traceId,
+  data: null  // 或安全的空默认值
+}
+```
+
+- `code === 0` 表示成功，非 0 为业务/系统错误
+- 每次请求生成 `traceId`，便于排查
+- `data` 字段类型必须与 `share/types/` 中对应 DTO 一致
+
+## 开发流程
+
+1. 在 `share/types/` 新增/修改 DTO
+2. 云函数按 DTO 组装 `data`
+3. 前端 `services/cloud/` 调用，`adapters/` 转换
+4. 微信开发者工具：右键函数目录 → **上传并部署：云端安装依赖**
+
+## 注意事项
+
+- 云函数内不引用 `@share` 路径别名（运行时不可用），通过 JSDoc `@typedef` 对齐契约
+- 敏感逻辑与密钥只在云端，不下发到小程序
+- 数据库操作替换 mock 时，保持返回结构不变，字段对齐 `database-schema.mdc`

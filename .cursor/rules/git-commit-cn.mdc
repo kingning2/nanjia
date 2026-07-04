@@ -1,0 +1,104 @@
+---
+description: 在用户要求创建 git 提交、写中文 commit message、按项目 Conventional Commits 规范提交，或 @git-commit-cn 时应用；规定 type/scope/中文简述、按模块拆分多个 commit、Husky 校验与提交流程。
+alwaysApply: false
+---
+# Git 提交规范（中文）
+
+**在用户要求提交代码、按本规范写 message，或 @ 提及 `git-commit-cn` 时执行。**
+
+## 提交信息格式
+
+```
+<type>(<scope>): <中文简述>
+```
+
+- **type**（必填）：`feat` | `fix` | `docs` | `chore` | `refactor` | `perf` | `test` | `build` | `style`
+- **scope**（推荐）：`api` | `listener` | `worker` | `admin` | `sdk` | `db` | `env` | `deps` | `docs` | `build` 等，与改动模块一致
+- **简述**：简体中文，一句话说清「为什么 / 做了什么」，不用英文句子
+
+### 示例（与本仓库历史一致）
+
+```
+feat(api): 添加 webhook 处理邮箱与标签树形结构
+feat(admin): 新增运行时日志页与进程监管面板
+refactor(api): 移除 email、rule 等废弃模块
+refactor(sdk): 精简 SDK，移除 email 发送服务
+chore(env): 补充进程运行时相关环境变量示例
+chore(db): 更新数据库 schema，对齐实体变更
+docs: 补充多进程部署说明
+```
+
+## 自动化校验
+
+- **build（必跑）**：提交前必须先完成打包，且**全部成功**后才允许 commit
+  - 仅后端改动：`pnpm build`
+  - 仅管理台改动：`pnpm build:admin`
+  - 前后端均有改动：`pnpm build:all`
+  - 构建失败时先修复，**不得**带着失败结果提交
+- **lint（建议）**：根目录 `pnpm run lint`（全量 ESLint，覆盖 `src/`、`packages/`、`test/`）
+- 本项目**无** Husky / commitlint 钩子；若后续接入，再同步更新本节
+
+## 分模块提交（默认，必遵）
+
+**不要把所有改动塞进一个 commit。** 除非用户明确要求「单次提交 / squash / 一个 commit」，否则按**模块边界**拆成多个 commit，每个 commit 只包含同一模块、同一目的的变更。
+
+**前后端必须分开提交**：后端（`src/`、`apps/`）与前端（`packages/admin-console/`）、SDK（`packages/email-automation-sdk/`）不得混在同一 commit。
+
+### 模块划分（与本仓库目录对应）
+
+| 模块 | 典型路径 / 范围 | 推荐 scope |
+|------|-----------------|------------|
+| 环境与示例配置 | `.env.example`、`.gitignore` | `env` |
+| 数据库 | `email.sql` | `db` |
+| 构建与依赖 | 根 `package.json`、`pnpm-lock.yaml`、`pnpm-workspace.yaml` | `deps` / `build` |
+| 后端公共层 | `src/common/`、`src/config/` | `api` |
+| 后端实体 | `src/database/entities/` | `api` |
+| 后端业务模块 | `src/modules/<name>/` | `api` |
+| API 进程入口 | `apps/api/` | `api` |
+| Listener 进程 | `apps/listener/` | `listener` |
+| Worker 进程 | `apps/worker/` | `worker` |
+| 应用装配 | `src/app/`（`app-core.module`、`api-app.module` 等） | `api` |
+| 管理台前端 | `packages/admin-console/` | `admin` |
+| SDK | `packages/email-automation-sdk/` | `sdk` |
+| 文档 | `README.md`、`packages/*/README.md` | `docs` |
+| Cursor 规则 | `.cursor/rules/` | `chore` |
+
+### 推荐拆分顺序（自下而上）
+
+跨层功能应按依赖顺序拆分，例如：
+
+1. `chore(env)` / `chore(db)` — 环境与 schema
+2. `refactor(api)` — 移除废弃模块与实体
+3. `feat(api)` — 配置、进程运行时、运行时日志、角色鉴权等新能力
+4. `refactor(api)` — 各业务模块（label、template、site、mailbox、mail-runtime、webhook、queue）
+5. `refactor(api)` / `feat(listener)` / `feat(worker)` — 应用装配与进程入口
+6. `refactor(sdk)` — SDK 契约与客户端
+7. `feat(admin)` / `refactor(admin)` / `chore(admin)` — 管理台新页面、页面调整、构建配置
+8. `docs` — 文档
+9. `chore(deps)` — lockfile（若未随各包 package.json 一并提交）
+
+**不要**一条 commit 同时改 `src/modules/` 和 `packages/admin-console/`。
+
+### 拆分原则
+
+- 一个 commit = 一个可独立 review 的主题；改了多少文件不重要，**边界**才重要。
+- 先提交底层（db、废弃清理、后端 API），再提交消费方（SDK、管理台、文档）。
+- 仅当改动极小且天然同属一处（如只改一个组件里的 typo）才可单 commit。
+- 拆完后向用户简要列出：commit 数量、每条 message、各自包含的路径范围。
+
+## 执行提交时的流程
+
+1. 并行查看：`git status`、`git diff`、`git log -10 --oneline`（对齐既有风格）
+2. 按上文**模块划分**将变更分组；为每组拟一条 `<type>(<scope>): <中文简述>`
+3. **不要**提交 `.env`、密钥、token 等敏感文件；若用户坚持，先警告
+4. **先打包**：按「自动化校验」选择对应 `pnpm build` / `pnpm build:admin` / `pnpm build:all`，成功后再进入提交
+5. **按组循环**：`git add <该组路径>` → `git commit -m "..."` → 确认成功；全部组完成后再 `git status`
+6. 用户要求提交时，默认在全部 commit 成功后执行 `git push`；仅当用户明确说「不要 push」时跳过
+
+## 禁止
+
+- 英文为主的 commit message（如 `Add modal window`）
+- 无 type 的随意描述（如 `update`、`fix bug`）
+- 跳过 hooks（`--no-verify`）除非用户明确要求且项目已配置 hooks
+- **默认禁止**把多模块、多主题改动合并为单个 commit（用户明确要求除外）
+- **默认禁止**前后端混在同一 commit

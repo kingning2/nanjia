@@ -1,0 +1,26 @@
+@use './variables' as *;
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin line-clamp($lines: 2) {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: $lines;
+}
+
+@mixin safe-bottom {
+  padding-bottom: calc(#{$space-md} + env(safe-area-inset-bottom));
+}
+
+@mixin page-container {
+  min-height: 100vh;
+  padding: $space-md;
+  box-sizing: border-box;
+  background: $color-bg;
+  color: $color-text;
+}

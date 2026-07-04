@@ -1,0 +1,36 @@
+@use '../../styles/variables' as *;
+
+.route-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  padding: 0 40px calc(20px + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+
+.route-tabbar__pill {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 40px;
+  border-radius: 999px;
+  background: rgba(248, 246, 242, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+.route-tabbar__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+}
+
+.route-tabbar__icon {
+  width: 52px;
+  height: 52px;
+}

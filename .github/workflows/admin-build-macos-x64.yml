@@ -1,0 +1,104 @@
+name: Build Admin (macOS Intel)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+# 独立工作流：各架构互不影响，任一失败都不阻塞其他架构发布到同一 tag。
+# macos-15-intel 为原生 Intel 机器（macos-13 已于 2025-12 下线），直接产出 x86_64，无需交叉编译。
+jobs:
+  build:
+    name: Build macOS x64
+    runs-on: macos-15-intel
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install native deps (macOS)
+        run: |
+          brew update
+          brew install pkg-config ffmpeg libvmaf dylibbundler
+          BREW_PREFIX="$(brew --prefix)"
+          FFMPEG_PREFIX="$(brew --prefix ffmpeg)"
+          VMAF_PREFIX="$(brew --prefix libvmaf)"
+          echo "PKG_CONFIG_PATH=${FFMPEG_PREFIX}/lib/pkgconfig:${VMAF_PREFIX}/lib/pkgconfig:${BREW_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=${FFMPEG_PREFIX}/lib:${VMAF_PREFIX}/lib:${BREW_PREFIX}/lib:${LIBRARY_PATH}" >> "$GITHUB_ENV"
+          echo "DYLD_LIBRARY_PATH=${FFMPEG_PREFIX}/lib:${VMAF_PREFIX}/lib:${BREW_PREFIX}/lib:${DYLD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+          echo "FFMPEG_DIR=${FFMPEG_PREFIX}" >> "$GITHUB_ENV"
+          echo "VMAF_DIR=${VMAF_PREFIX}" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Write env files from GitHub Secrets
+        env:
+          TARO_APP_ID: ${{ secrets.TARO_APP_ID }}
+          TARO_APP_CLOUD_ENV_ID: ${{ secrets.TARO_APP_CLOUD_ENV_ID }}
+          CLOUDBASE_SECRET_ID: ${{ secrets.CLOUDBASE_SECRET_ID }}
+          CLOUDBASE_SECRET_KEY: ${{ secrets.CLOUDBASE_SECRET_KEY }}
+          TARO_APP_CLOUD_ENV_ID_TEST: ${{ secrets.TARO_APP_CLOUD_ENV_ID_TEST }}
+          TARO_APP_CLOUD_ENV_ID_PRODUCTION: ${{ secrets.TARO_APP_CLOUD_ENV_ID_PRODUCTION }}
+          CLOUDBASE_SECRET_ID_TEST: ${{ secrets.CLOUDBASE_SECRET_ID_TEST }}
+          CLOUDBASE_SECRET_KEY_TEST: ${{ secrets.CLOUDBASE_SECRET_KEY_TEST }}
+          CLOUDBASE_SECRET_ID_PRODUCTION: ${{ secrets.CLOUDBASE_SECRET_ID_PRODUCTION }}
+          CLOUDBASE_SECRET_KEY_PRODUCTION: ${{ secrets.CLOUDBASE_SECRET_KEY_PRODUCTION }}
+          ADMIN_UPDATE_CDN_BASE: ${{ secrets.ADMIN_UPDATE_CDN_BASE }}
+        run: node scripts/write-env-from-secrets.mjs --ci
+
+      - name: Build Tauri bundle
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TARO_APP_ID: ${{ secrets.TARO_APP_ID }}
+          TARO_APP_CLOUD_ENV_ID: ${{ secrets.TARO_APP_CLOUD_ENV_ID }}
+          CLOUDBASE_SECRET_ID: ${{ secrets.CLOUDBASE_SECRET_ID }}
+          CLOUDBASE_SECRET_KEY: ${{ secrets.CLOUDBASE_SECRET_KEY }}
+          TARO_APP_CLOUD_ENV_ID_TEST: ${{ secrets.TARO_APP_CLOUD_ENV_ID_TEST }}
+          TARO_APP_CLOUD_ENV_ID_PRODUCTION: ${{ secrets.TARO_APP_CLOUD_ENV_ID_PRODUCTION }}
+          CLOUDBASE_SECRET_ID_TEST: ${{ secrets.CLOUDBASE_SECRET_ID_TEST }}
+          CLOUDBASE_SECRET_KEY_TEST: ${{ secrets.CLOUDBASE_SECRET_KEY_TEST }}
+          CLOUDBASE_SECRET_ID_PRODUCTION: ${{ secrets.CLOUDBASE_SECRET_ID_PRODUCTION }}
+          CLOUDBASE_SECRET_KEY_PRODUCTION: ${{ secrets.CLOUDBASE_SECRET_KEY_PRODUCTION }}
+          ADMIN_UPDATE_CDN_BASE: ${{ secrets.ADMIN_UPDATE_CDN_BASE }}
+        run: pnpm -C admin tauri:build
+
+      - name: Upload bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-macos-x64
+          path: admin/src-tauri/target/release/bundle/**
+          if-no-files-found: error
+
+      - name: Create GitHub Release and upload assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: false
+          body_path: releases/${{ github.ref_name }}.md
+          files: |
+            admin/src-tauri/target/release/bundle/dmg/*.dmg
+            admin/src-tauri/target/release/bundle/macos/*.app.tar.gz
+
+      - name: Publish update to CloudBase COS
+        if: startsWith(github.ref, 'refs/tags/')
+        continue-on-error: true
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          node scripts/publish-admin-update.mjs --env production --platform darwin-x86_64 --version "$VERSION"

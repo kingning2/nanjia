@@ -1,0 +1,59 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.lazy-image {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background: $color-surface-soft;
+}
+
+.lazy-image__img {
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lazy-image__img--loaded {
+  opacity: 1;
+}
+
+.lazy-image__placeholder {
+  @include flex-center;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: $color-text-secondary;
+  font-size: $font-sm;
+  background: $color-surface-soft;
+  opacity: 1;
+  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.lazy-image__sizer {
+  width: 100%;
+}
+
+.lazy-image__placeholder--hidden {
+  opacity: 0;
+}
+
+/* widthFix：高度由图片本身决定，不能强制 100% 否则会塌成 0 高 */
+.lazy-image--widthFix {
+  height: auto;
+}
+
+.lazy-image--widthFix .lazy-image__img {
+  height: auto;
+  display: block;
+}
+
+.lazy-image--widthFix .lazy-image__placeholder {
+  position: relative;
+  height: auto;
+}

@@ -1,0 +1,61 @@
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+}
+
+.envCard {
+  height: 100%;
+}
+
+.envCardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.envCardDesc {
+  margin-bottom: 0 !important;
+  min-height: 40px;
+  font-size: 13px;
+}
+
+.mainCard {
+  border-color: #e8dcc8;
+  background: linear-gradient(180deg, #faf6ef 0%, #ffffff 100%);
+}
+
+.copyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.envSelect {
+  min-width: 120px;
+}
+
+.copyArrow {
+  color: #c8a96e;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .copyRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .envSelect {
+    width: 100%;
+  }
+
+  .copyArrow {
+    align-self: center;
+    transform: rotate(90deg);
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@nanjia/cloudbase-migrate",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "腾讯云开发环境迁移工具（数据库 + 云存储 + fileID 替换）",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "build:sidecar": "node scripts/build-sidecar.mjs",
+    "build:sidecar:force": "node scripts/build-sidecar.mjs --force",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js"
+  },
+  "dependencies": {
+    "@cloudbase/manager-node": "4.2.0",
+    "@cloudbase/node-sdk": "2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.3"
+  }
+}
