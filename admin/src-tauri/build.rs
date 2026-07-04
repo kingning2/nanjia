@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 fn main() {
     copy_bundled_env_for_release();
     tauri_build::build();
@@ -8,7 +10,6 @@ fn main() {
 /// 若不存在则从进程环境变量生成（CI 注入 GitHub Secrets，见 scripts/write-env-from-secrets.mjs）。
 fn copy_bundled_env_for_release() {
     use std::fs;
-    use std::path::{Path, PathBuf};
 
     let profile = std::env::var("PROFILE").unwrap_or_default();
     if profile != "release" {
@@ -25,7 +26,7 @@ fn copy_bundled_env_for_release() {
     fs::create_dir_all(&out_dir).expect("创建 bundled-env 目录失败");
 
     for spec in BUNDLE_SPECS {
-        materialize_env_file(&project_root, &out_dir, spec);
+        materialize_env_file(&project_root, &out_dir, &spec);
     }
 }
 
