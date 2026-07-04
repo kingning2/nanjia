@@ -7,10 +7,11 @@ on:
       - "v*"
 
 # 独立工作流：各架构互不影响，任一失败都不阻塞其他架构发布到同一 tag。
+# macos-15：corelocation-rs 0.3.x Swift 桥接需 macOS 15 SDK（macos-14 / Xcode 15 缺 CLLocationUpdate.stationary 等 API）
 jobs:
   build:
     name: Build macOS arm64
-    runs-on: macos-14
+    runs-on: macos-15
     permissions:
       contents: write
 
