@@ -48,8 +48,48 @@ has_homebrew_refs() {
   otool -L "$1" 2>/dev/null | grep -qE "$HOMEBREW_RE"
 }
 
+repack_distributables() {
+  echo "bundle-ffmpeg-macos: 开始重建分发包"
+
+  BUNDLE_ROOT="$ROOT/admin/src-tauri/target/release/bundle"
+  APP_NAME="$(basename "$APP")"
+  TAURI_CONF="$ROOT/admin/src-tauri/tauri.conf.json"
+  PRODUCT_NAME="$(node -p "JSON.parse(require('fs').readFileSync('$TAURI_CONF','utf8')).productName")"
+  VERSION="$(node -p "JSON.parse(require('fs').readFileSync('$TAURI_CONF','utf8')).version")"
+  ARCH_SUFFIX="$(uname -m)"
+  if [[ "$ARCH_SUFFIX" == "arm64" ]]; then
+    ARCH_SUFFIX="aarch64"
+  else
+    ARCH_SUFFIX="x64"
+  fi
+
+  TAR_GZ="$BUNDLE_ROOT/macos/${APP_NAME}.tar.gz"
+  rm -f "$TAR_GZ"
+  tar -czf "$TAR_GZ" -C "$BUNDLE_MACOS" "$APP_NAME"
+  echo "bundle-ffmpeg-macos: 已重建 $TAR_GZ"
+
+  if [[ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ]]; then
+    echo "bundle-ffmpeg-macos: 重新生成更新包签名 (.sig)"
+    (cd "$ROOT/admin" && pnpm exec tauri signer sign "$TAR_GZ") || \
+      echo "bundle-ffmpeg-macos: 警告：.sig 生成失败，自动更新可能不可用"
+  fi
+
+  DMG_DIR="$BUNDLE_ROOT/dmg"
+  mkdir -p "$DMG_DIR"
+  DMG_FILE="$DMG_DIR/${PRODUCT_NAME}_${VERSION}_${ARCH_SUFFIX}.dmg"
+  VOLNAME="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$APP/Contents/Info.plist" 2>/dev/null || echo "$PRODUCT_NAME")"
+  STAGING="$(mktemp -d)"
+  cp -R "$APP" "$STAGING/"
+  rm -f "$DMG_FILE"
+  hdiutil create -volname "$VOLNAME" -srcfolder "$STAGING" -ov -format UDZO "$DMG_FILE" >/dev/null
+  rm -rf "$STAGING"
+  echo "bundle-ffmpeg-macos: 已重建 $DMG_FILE"
+}
+
 if ! has_homebrew_refs "$EXE"; then
-  echo "bundle-ffmpeg-macos: 可执行文件已无 Homebrew 绝对路径，跳过"
+  echo "bundle-ffmpeg-macos: 可执行文件已无 Homebrew 绝对路径，跳过 dylib 嵌入"
+  repack_distributables
+  echo "bundle-ffmpeg-macos: 完成"
   exit 0
 fi
 
@@ -97,28 +137,5 @@ while IFS= read -r -d '' lib; do
   fi
 done < <(find "$FRAMEWORKS" \( -name '*.dylib' -o -name '*.so' \) -print0 2>/dev/null)
 
-echo "bundle-ffmpeg-macos: install_name 已改写，开始重建分发包"
-
-BUNDLE_ROOT="$ROOT/admin/src-tauri/target/release/bundle"
-APP_NAME="$(basename "$APP")"
-
-TAR_GZ="$BUNDLE_ROOT/macos/${APP_NAME}.tar.gz"
-rm -f "$TAR_GZ"
-tar -czf "$TAR_GZ" -C "$BUNDLE_MACOS" "$APP_NAME"
-echo "bundle-ffmpeg-macos: 已重建 $TAR_GZ"
-
-DMG_DIR="$BUNDLE_ROOT/dmg"
-if [[ -d "$DMG_DIR" ]]; then
-  DMG_FILE="$(find "$DMG_DIR" -maxdepth 1 -name '*.dmg' -print -quit || true)"
-  if [[ -n "$DMG_FILE" ]]; then
-    VOLNAME="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$APP/Contents/Info.plist" 2>/dev/null || echo "$APP_NAME")"
-    STAGING="$(mktemp -d)"
-    cp -R "$APP" "$STAGING/"
-    rm -f "$DMG_FILE"
-    hdiutil create -volname "$VOLNAME" -srcfolder "$STAGING" -ov -format UDZO "$DMG_FILE" >/dev/null
-    rm -rf "$STAGING"
-    echo "bundle-ffmpeg-macos: 已重建 $DMG_FILE"
-  fi
-fi
-
+repack_distributables
 echo "bundle-ffmpeg-macos: 完成"

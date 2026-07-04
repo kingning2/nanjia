@@ -37,7 +37,7 @@ pnpm tauri dev
 
 三端统一走 `ffmpeg-next` 动态链接，构建时随包分发 ffmpeg 运行时库。
 
-- **macOS**：`brew install ffmpeg dylibbundler`（编译期走 pkg-config）。**release 打包**请用 `pnpm tauri:build`（不是裸 `tauri build`）：构建完成后会自动把 Homebrew 的 `libav*` / `libsw*` 及传递依赖复制进 `.app/Contents/Frameworks/`，用 `dylibbundler` 改写 `install_name` 为 `@executable_path/../Frameworks/…` 并重新 `codesign`。有开发者证书时设 `APPLE_SIGNING_IDENTITY`。验收：`otool -L …/nanjia-beauty-admin` 中不应再出现 `/usr/local/opt/` 或 `/opt/homebrew/`。
+- **macOS**：`brew install ffmpeg dylibbundler`（编译期走 pkg-config）。**release 打包**请用 `pnpm tauri:build`（不是裸 `tauri build`）：先只打 `.app`（避开 CI 上 `bundle_dmg.sh` / AppleScript 失败），再由脚本嵌入 ffmpeg 并产出 `.dmg` / `.app.tar.gz`。有开发者证书时设 `APPLE_SIGNING_IDENTITY`。验收：`otool -L …/nanjia-beauty-admin` 中不应再出现 `/usr/local/opt/` 或 `/opt/homebrew/`。
 - **Linux**：`brew install ffmpeg` 或系统包（走 pkg-config，`FFMPEG_DIR` 可选）。
 - **Windows**：下载预编译 **shared** 库（8.1 分支，与 macOS brew / `ffmpeg-next 8.1` 对齐），把 `FFMPEG_DIR` 指向解压根目录（含 `include/ lib/ bin/`），并把 `bin` 加入 `PATH`：
 
