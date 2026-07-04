@@ -12,7 +12,8 @@ pub mod video_util;
 use commands::{
     analyze_media_redundancy, delete_category, delete_material_card,
     delete_material_detail, delete_project, delete_storage_file, delete_unused_media,
-    ensure_database, get_category, get_env_billing_info, get_home_settings, get_material_card,
+    ensure_database, get_category, get_current_position_native, get_env_billing_info,
+    get_home_settings, get_material_card,
     get_material_detail, get_project, list_categories, list_env_profiles, list_material_cards,
     list_material_details, list_projects, list_uploaded_media, migrate_env, preview_image_compress,
     resolve_storage_url, save_category, save_home_settings, save_material_card,
@@ -84,6 +85,7 @@ pub fn run() {
             save_material_detail,
             delete_material_detail,
             get_home_settings,
+            get_current_position_native,
             save_home_settings,
             list_env_profiles,
             set_active_env_profile,

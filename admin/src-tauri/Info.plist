@@ -2,7 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSLocationUsageDescription</key>
+	<string>需要获取您的位置，以便在联系页配置门店导航坐标</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>需要获取您的位置以提供相关服务</string>
+	<string>需要获取您的位置，以便在联系页配置门店导航坐标</string>
 </dict>
 </plist>

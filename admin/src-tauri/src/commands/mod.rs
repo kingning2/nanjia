@@ -2,6 +2,7 @@ pub mod content;
 pub mod database;
 pub mod env_billing;
 pub mod env_profile;
+pub mod geolocation;
 pub mod media_audit;
 pub mod migrate_env;
 pub mod upload;
@@ -15,6 +16,7 @@ pub use content::{
 pub use database::ensure_database;
 pub use env_billing::get_env_billing_info;
 pub use env_profile::{list_env_profiles, set_active_env_profile, sync_env_profiles_from_files};
+pub use geolocation::get_current_position_native;
 pub use media_audit::{analyze_media_redundancy, delete_unused_media};
 pub use migrate_env::migrate_env;
 pub use upload::{

@@ -38,6 +38,9 @@ tracing-appender = "0.2"
 ffmpeg-next = { version = "8.1", default-features = false, features = ["codec", "format", "software-scaling", "software-resampling"] }
 dirs = "5"
 
+[target.'cfg(target_os = "macos")'.dependencies]
+corelocation-rs = "0.3.7"
+
 [lints.rust]
 warnings = "deny"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tauri_unstable)'] }
