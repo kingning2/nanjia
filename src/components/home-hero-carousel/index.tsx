@@ -15,7 +15,6 @@ interface HomeHeroCarouselProps {
 export default function HomeHeroCarousel({
   images,
   interval = 4,
-  tagline
 }: HomeHeroCarouselProps) {
   const slides = useMemo(
     () => sortByOrder(images.filter((item) => item.imageUrl?.trim())),
@@ -46,7 +45,6 @@ export default function HomeHeroCarousel({
       </Swiper>
       <View className='home-hero-carousel__shade' />
       <View className='home-hero-carousel__feather' />
-      {tagline ? <Text className='home-hero-carousel__tagline'>{tagline}</Text> : null}
     </View>
   )
 }

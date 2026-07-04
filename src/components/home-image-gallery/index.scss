@@ -13,14 +13,9 @@
 
 .home-image-gallery__item {
   width: 100%;
+  display: block;
   overflow: hidden;
   border-radius: 4px;
-}
-
-.home-image-gallery__item .lazy-image__img {
-  width: 100%;
-  display: block;
-  vertical-align: top;
 }
 
 .home-image-gallery__separator {

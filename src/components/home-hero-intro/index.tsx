@@ -20,7 +20,6 @@ type PlayerSlot = 'a' | 'b'
 
 export default function HomeHeroIntro({
   videos,
-  tagline = 'Captured Moments, Timeless Elegance.',
   onPhaseChange
 }: HomeHeroIntroProps) {
   const slides = useMemo(
@@ -123,11 +122,11 @@ export default function HomeHeroIntro({
         ) : null}
         <View className='home-hero-intro__shade' />
         <View className='home-hero-intro__feather' />
-        {phase !== 'intro' && tagline ? (
+        {/* {phase !== 'intro' && tagline ? (
           <Animate type='slide-bottom' action='initial' loop={false}>
             <Text className='home-hero-intro__tagline'>{tagline}</Text>
           </Animate>
-        ) : null}
+        ) : null} */}
       </View>
     </View>
   )

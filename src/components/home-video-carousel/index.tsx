@@ -52,14 +52,6 @@ export default function HomeVideoCarousel({
     )
   }
 
-  if (!count) {
-    return (
-      <View className='home-video-carousel home-video-carousel--empty'>
-        {tagline ? <Text className='home-video-carousel__tagline'>{tagline}</Text> : null}
-      </View>
-    )
-  }
-
   const slotAUrl = activeSlot === 'a' ? currentUrl : preloadUrl
   const slotBUrl = activeSlot === 'b' ? currentUrl : preloadUrl
 

@@ -1,8 +1,7 @@
-import { View } from '@tarojs/components'
+import { Image, View } from '@tarojs/components'
 import { useMemo } from 'react'
 import { sortByOrder } from '@share/types/content'
 import type { HomeImageItem } from '../../types/project'
-import LazyImage from '../lazy-image'
 import './index.scss'
 
 interface HomeImageGalleryProps {
@@ -25,10 +24,9 @@ export default function HomeImageGallery({ items = [] }: HomeImageGalleryProps) 
         const isLast = index === images.length - 1
         return (
           <View key={`${item.sort}-${item.imageUrl}-${index}`} className='home-image-gallery__row'>
-            <LazyImage
-              src={item.imageUrl}
-              alt={`home-image-${index + 1}`}
+            <Image
               className='home-image-gallery__item'
+              src={item.imageUrl}
               mode='widthFix'
             />
             {!isLast ? (

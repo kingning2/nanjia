@@ -12,6 +12,7 @@ import RouteTabbar from '../../components/route-tabbar'
 import { useDevDebug } from '../../hooks/useDevDebug'
 import { useMiniShare } from '../../hooks/useMiniShare'
 import { getPortfolioHome } from '../../services/cloud/project'
+import { getCloudEnvId } from '../../services/cloud/init'
 import {
   CarouselVideoItem,
   HomeHeroMediaType,
@@ -20,7 +21,6 @@ import {
 } from '../../types/project'
 import './index.scss'
 
-const heroTagline = 'Captured Moments, Timeless Elegance.'
 // 为空时显示文字；填入艺术字图片地址后显示图片（推荐放 src/assets/home/ 下）
 const homeBrandArtImage = ''
 
@@ -31,8 +31,10 @@ type HomeDebugState = {
   message: string
   traceId: string
   rawResponse: string
+  heroMediaType: string
   videoCount: number
-  imageCount: number
+  heroImageCount: number
+  galleryCount: number
   showHero: boolean
   heroCanPlay: boolean
   error?: string
@@ -52,8 +54,10 @@ const initialDebug: HomeDebugState = {
   message: '',
   traceId: '',
   rawResponse: '',
+  heroMediaType: '',
   videoCount: 0,
-  imageCount: 0,
+  heroImageCount: 0,
+  galleryCount: 0,
   showHero: false,
   heroCanPlay: false
 }
@@ -89,10 +93,13 @@ export default function HomePage() {
   const debugEntries = useMemo(
     () => [
       { label: '状态', value: debug.status },
+      { label: '云环境', value: getCloudEnvId() || '(空)' },
+      { label: '轮播模式', value: debug.heroMediaType || '(空)' },
       { label: 'message', value: debug.message || '(空)' },
       { label: 'traceId', value: debug.traceId || '(空)' },
-      { label: '视频数', value: String(debug.videoCount) },
-      { label: '配图数', value: String(debug.imageCount) },
+      { label: '顶部视频', value: String(debug.videoCount) },
+      { label: '顶部轮播图', value: String(debug.heroImageCount) },
+      { label: '首页配图', value: String(debug.galleryCount) },
       { label: 'showHero', value: String(debug.showHero) },
       { label: 'heroCanPlay', value: String(debug.heroCanPlay) },
       { label: '接口返回', value: debug.rawResponse || '(空)' },
@@ -165,8 +172,10 @@ export default function HomePage() {
         message: result.message,
         traceId: result.traceId || result.data.traceId || '',
         rawResponse: formatDebugJson(result.raw),
+        heroMediaType: mediaType,
         videoCount: videos.length,
-        imageCount: mediaType === 'image' ? heroImgs.length : images.length,
+        heroImageCount: heroImgs.length,
+        galleryCount: images.length,
         showHero: nextShowHero,
         heroCanPlay: nextHeroCanPlay
       })
@@ -181,8 +190,10 @@ export default function HomePage() {
         message: '',
         traceId: '',
         rawResponse: '',
+        heroMediaType: '',
         videoCount: 0,
-        imageCount: 0,
+        heroImageCount: 0,
+        galleryCount: 0,
         showHero: false,
         heroCanPlay: false,
         error: message
@@ -225,12 +236,10 @@ export default function HomePage() {
               <HomeHeroCarousel
                 images={heroImages}
                 interval={heroInterval}
-                tagline={heroTagline}
               />
             ) : (
               <HomeHeroIntro
                 videos={carouselVideos}
-                tagline={heroTagline}
                 onPhaseChange={handleHeroPhaseChange}
               />
             )
