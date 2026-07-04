@@ -1,6 +1,10 @@
 use serde::Serialize;
+
+#[cfg(target_os = "macos")]
 use std::sync::mpsc;
+#[cfg(target_os = "macos")]
 use std::thread;
+#[cfg(target_os = "macos")]
 use std::time::{Duration, Instant};
 
 #[derive(Serialize)]
