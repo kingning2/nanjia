@@ -2,3 +2,6 @@
 # ffmpeg-next 动态链接：Windows 需下载预编译 shared 库并把 FFMPEG_DIR 指向其根目录
 # （含 include/ lib/ bin/，见 admin/README.md）；macOS/Linux 走系统 ffmpeg（pkg-config）。
 PATH = { value = "C:\\Program Files\\Git\\bin", force = false }
+# ponytail: ffmpeg-sys-next 仅在 Windows 读取 FFMPEG_DIR，macOS/Linux 仍走 pkg-config
+FFMPEG_DIR = "D:\\ffmpeg-dev\\ffmpeg-n8.1-latest-win64-gpl-shared-8.1"
+LIBCLANG_PATH = "C:\\Program Files\\LLVM\\bin"
