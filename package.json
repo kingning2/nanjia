@@ -20,7 +20,6 @@
     "deploy:cf:prod": "node scripts/deploy-cloud-functions.mjs --env production",
     "cloud:hint": "node -e \"console.log('pnpm deploy:cf:dev | deploy:cf:test | deploy:cf:prod  按环境密钥登录 tcb 并部署全部云函数；单函数: node scripts/deploy-cloud-functions.mjs --env test --fn portfolioHome')\"",
     "sync:project": "node scripts/sync-project-config.mjs",
-    "seed:products": "node scripts/seed-product-catalog.mjs",
     "release": "node scripts/release.mjs",
     "migrate:build": "pnpm --filter @nanjia/cloudbase-migrate build",
     "migrate:sidecar": "pnpm --filter @nanjia/cloudbase-migrate build:sidecar",
