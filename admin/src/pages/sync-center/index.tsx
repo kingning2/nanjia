@@ -54,31 +54,6 @@ export default function SyncCenterPage() {
     [profileBySlug]
   )
 
-  const showSyncErrors = useCallback(
-    (title: string, errors: string[]) => {
-      modal.warning({
-        title,
-        width: 720,
-        content: (
-          <div>
-            <Paragraph type='secondary'>已迁移可处理的数据，以下项目需要修正后再重试。</Paragraph>
-            <Space direction='vertical' size={8} style={{ width: '100%' }}>
-              {errors.slice(0, 20).map((error, index) => (
-                <Text key={`${index}-${error}`} code copyable>
-                  {error}
-                </Text>
-              ))}
-              {errors.length > 20 ? (
-                <Text type='secondary'>还有 {errors.length - 20} 项未展示</Text>
-              ) : null}
-            </Space>
-          </div>
-        )
-      })
-    },
-    [modal]
-  )
-
   const selectedPair = useCallback(() => {
     if (!copyFrom || !copyTo) return null
     const source = profiles.find((p) => p.id === copyFrom)
@@ -182,23 +157,10 @@ export default function SyncCenterPage() {
       onOk: async () => {
         setBusy(true)
         try {
-          const result = await migrateEnv({
+          await migrateEnv({
             sourceProfileId: pair.source.id,
             targetProfileId: pair.target.id
           })
-          const seconds = (result.durationMs / 1000).toFixed(1)
-          if (result.errors.length) {
-            showSyncErrors(`迁移完成（${seconds}s），但有 ${result.errors.length} 项未成功`, result.errors)
-          } else {
-            const parts: string[] = []
-            if (result.documentsDeleted) parts.push(`清空 ${result.documentsDeleted} 条文档`)
-            if (result.storageObjectsDeleted) parts.push(`${result.storageObjectsDeleted} 个文件`)
-            if (result.documentsProcessed > 0) parts.push(`写入 ${result.documentsProcessed} 条文档`)
-            if (result.mediaUploaded > 0) parts.push(`上传 ${result.mediaUploaded} 个文件`)
-            message.success(
-              `已将「${fromName}」复制到「${toName}」（${seconds}s${parts.length ? `：${parts.join('，')}` : ''}）`
-            )
-          }
         } finally {
           setBusy(false)
         }
