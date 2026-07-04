@@ -26,7 +26,6 @@ const APP_TITLE: &str = "南嘉管理后台";
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let _log_guard = logging::init();
-    cloud::load_dotenv();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())

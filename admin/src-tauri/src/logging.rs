@@ -49,9 +49,10 @@ fn resolve_log_dir() -> PathBuf {
     }
 
     // `pnpm tauri dev` 时 cwd 通常为 admin/src-tauri
-    if std::path::Path::new("../.env").exists() {
+    if cfg!(debug_assertions) && std::path::Path::new("../.env").exists() {
         return PathBuf::from("../logs");
     }
 
-    PathBuf::from("logs")
+    // release / Finder 启动时 cwd 常为 `/`，不可用相对路径
+    crate::local::paths::app_data_dir().join("logs")
 }
