@@ -17,7 +17,6 @@ pub struct CurrentPositionDto {
 fn get_current_position_macos() -> Result<CurrentPositionDto, String> {
     use corelocation::authorization::AuthorizationStatus;
     use corelocation::manager::{LocationManager, LocationManagerCallbacks};
-    use corelocation::prelude::*;
 
     if !LocationManager::location_services_enabled() {
         return Err("系统定位服务未开启，请在系统设置中打开定位服务".into());
