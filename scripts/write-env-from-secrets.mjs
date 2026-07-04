@@ -46,7 +46,6 @@ function render(spec) {
   const secretId = pick(spec.secretIdKeys)
   const secretKey = pick(spec.secretKeyKeys)
   const appId = pick(['TARO_APP_ID'])
-  const cdnBase = pick(['ADMIN_UPDATE_CDN_BASE'])
 
   const missing = []
   if (!envId) missing.push(spec.envIdKeys.join(' / '))
@@ -68,9 +67,6 @@ function render(spec) {
     `CLOUDBASE_SECRET_ID=${secretId}`,
     `CLOUDBASE_SECRET_KEY=${secretKey}`,
   ]
-  if (cdnBase && spec.slug === 'production') {
-    lines.push('', `ADMIN_UPDATE_CDN_BASE=${cdnBase}`)
-  }
   return `${lines.join('\n')}\n`
 }
 

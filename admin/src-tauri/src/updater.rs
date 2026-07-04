@@ -2,7 +2,7 @@ use tauri::AppHandle;
 use tauri_plugin_updater::UpdaterExt;
 use tracing::{debug, info, warn};
 
-/// release 启动后异步检查 CloudBase COS 上的更新清单。
+/// release 启动后异步检查 GitHub Release 上的更新清单。
 pub fn spawn_startup_check(app: &AppHandle) {
     if cfg!(debug_assertions) {
         debug!("debug 模式跳过自动更新检查");

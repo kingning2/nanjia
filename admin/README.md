@@ -50,25 +50,26 @@ pnpm tauri dev
 
   打包时需把 `bin\*.dll`（av*/sw* 运行时库）复制到 `src-tauri/ffmpeg/`，`tauri.windows.conf.json` 会将其打进安装包并置于 exe 同目录（CI 已自动处理）。
 
-## 自动更新（CloudBase COS）
+## 自动更新（GitHub Release）
 
-release 版启动时会请求 CloudBase 云存储 CDN 上的 `admin-updates/latest.json`，有新版本则弹出系统更新对话框。
+release 版启动时会请求 GitHub Release 上的 `latest.json`，有新版本则弹出系统更新对话框。
 
-### 一次性配置
+清单地址：`https://github.com/kingning2/nanjia/releases/latest/download/latest.json`
 
-1. **云存储公有读**：在微信云开发控制台 → 云存储 → 权限设置，为 `admin-updates/` 前缀配置**所有用户可读**（否则客户端拉不到清单）。上传仍走 CAM 密钥，仅管理端/CI 可写。
-2. **CDN 域名**：默认 `https://{TARO_APP_CLOUD_ENV_ID}.tcb.qcloud.la`。若控制台显示的 CDN 域名不同，在 `.env.production` 增加 `ADMIN_UPDATE_CDN_BASE=https://你的CDN域名`（或 GitHub Secret `ADMIN_UPDATE_CDN_BASE`）。
-3. **GitHub Secrets**：见项目根 [README.md](../README.md#github-secrets私有公开仓库-ci-打包必填)（含 `TAURI_SIGNING_PRIVATE_KEY`、CloudBase CAM 密钥等）。**勿将 `.env.*` 提交进 Git。**
+### 配置
+
+1. **GitHub Secrets**：见项目根 [README.md](../README.md#github-secrets私有公开仓库-ci-打包必填)（含 `TAURI_SIGNING_PRIVATE_KEY` 等）。**勿将 `.env.*` 提交进 Git。**
+2. **仓库需公开**：客户端需能匿名拉取 Release 资源；私有仓库需另行配置 GitHub API + Token（当前未支持）。
 
 ### 发布流程
 
-打 tag 后 CI 会：构建 → 发布 GitHub Release → **再尝试**上传 COS 更新包（与 Release 解耦，COS 失败不影响安装包发布）。
+打 tag 后 CI 会：构建 → 上传安装包到 GitHub Release → 合并写入 `latest.json`（各平台工作流分别贡献 `darwin-aarch64` / `darwin-x86_64` / `windows-x86_64` 条目）。
 
-本地手动发布单平台（可选）：
+本地手动补写单平台 manifest（可选，需 `gh` CLI 已登录且 Release 已存在）：
 
 ```bash
 # 需先 pnpm -C admin tauri:build，并设置 TAURI_SIGNING_PRIVATE_KEY
-node scripts/publish-admin-update.mjs --env production --platform darwin-aarch64 --version 0.1.4
+node scripts/publish-admin-update.mjs --platform darwin-aarch64 --version 0.1.4 --tag v0.1.4
 ```
 
 `platform` 取值：`darwin-aarch64` | `darwin-x86_64` | `windows-x86_64`。

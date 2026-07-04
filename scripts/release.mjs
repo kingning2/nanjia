@@ -97,7 +97,7 @@ ${bullets}
 
 ### 自动更新
 
-- release 版启动后从 CloudBase COS 检查更新（v0.1.4 及以上）
+- release 版启动后从 GitHub Release 检查更新（`latest.json`）
 - 详见 \`admin/README.md\`
 `
   mkdirSync(RELEASES_DIR, { recursive: true })

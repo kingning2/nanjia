@@ -20,14 +20,14 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost https://*.tcb.qcloud.la https://*.myqcloud.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
+      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost https://github.com https://*.githubusercontent.com https://*.tcb.qcloud.la https://*.myqcloud.com; img-src 'self' data: https: blob:; media-src 'self' https: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
     }
   },
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDEyREFCODgwNTlGNjRGNTkKUldSWlQvWlpnTGphRW93N21UTUZ2STA3aUpUbmhmNTU3QVVYaFhjNENXVU5uQnZ1Y3hKaTZmcFkK",
       "endpoints": [
-        "https://cloud1-d7gyfke5pcc4a88a5.tcb.qcloud.la/admin-updates/latest.json"
+        "https://github.com/kingning2/nanjia/releases/latest/download/latest.json"
       ],
       "dialog": true,
       "windows": {

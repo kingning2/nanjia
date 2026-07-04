@@ -108,13 +108,6 @@ fn render_from_env(spec: &BundleSpec) -> Option<String> {
         format!("CLOUDBASE_SECRET_KEY={secret_key}"),
     ];
 
-    if spec.build_env == "production" {
-        if let Some(cdn) = pick_env(&["ADMIN_UPDATE_CDN_BASE"]) {
-            lines.push(String::new());
-            lines.push(format!("ADMIN_UPDATE_CDN_BASE={cdn}"));
-        }
-    }
-
     lines.push(String::new());
     Some(lines.join("\n"))
 }

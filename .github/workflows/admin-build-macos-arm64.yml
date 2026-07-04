@@ -59,7 +59,6 @@ jobs:
           CLOUDBASE_SECRET_KEY_TEST: ${{ secrets.CLOUDBASE_SECRET_KEY_TEST }}
           CLOUDBASE_SECRET_ID_PRODUCTION: ${{ secrets.CLOUDBASE_SECRET_ID_PRODUCTION }}
           CLOUDBASE_SECRET_KEY_PRODUCTION: ${{ secrets.CLOUDBASE_SECRET_KEY_PRODUCTION }}
-          ADMIN_UPDATE_CDN_BASE: ${{ secrets.ADMIN_UPDATE_CDN_BASE }}
         run: node scripts/write-env-from-secrets.mjs --ci
 
       - name: Build Tauri bundle
@@ -75,7 +74,6 @@ jobs:
           CLOUDBASE_SECRET_KEY_TEST: ${{ secrets.CLOUDBASE_SECRET_KEY_TEST }}
           CLOUDBASE_SECRET_ID_PRODUCTION: ${{ secrets.CLOUDBASE_SECRET_ID_PRODUCTION }}
           CLOUDBASE_SECRET_KEY_PRODUCTION: ${{ secrets.CLOUDBASE_SECRET_KEY_PRODUCTION }}
-          ADMIN_UPDATE_CDN_BASE: ${{ secrets.ADMIN_UPDATE_CDN_BASE }}
         run: pnpm -C admin tauri:build
 
       - name: Upload bundles
@@ -95,10 +93,10 @@ jobs:
             admin/src-tauri/target/release/bundle/dmg/*.dmg
             admin/src-tauri/target/release/bundle/macos/*.app.tar.gz
 
-      # COS 上传与 GitHub Release 解耦：失败不阻塞安装包发布，可单独重跑本步骤
-      - name: Publish update to CloudBase COS
+      - name: Publish updater manifest to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
-        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          node scripts/publish-admin-update.mjs --env production --platform darwin-aarch64 --version "$VERSION"
+          node scripts/publish-admin-update.mjs --platform darwin-aarch64 --version "$VERSION" --tag "$GITHUB_REF_NAME"

@@ -76,8 +76,7 @@ cp .env.production.example .env.production
 | `TARO_APP_CLOUD_ENV_ID` | 云环境 ID（测试/正式相同时填这一个即可） |
 | `CLOUDBASE_SECRET_ID` | CAM SecretId |
 | `CLOUDBASE_SECRET_KEY` | CAM SecretKey |
-| `TAURI_SIGNING_PRIVATE_KEY` | 管理端自动更新签名私钥 |
-| `ADMIN_UPDATE_CDN_BASE` | 可选，COS CDN 根地址 |
+| `TAURI_SIGNING_PRIVATE_KEY` | 管理端自动更新签名私钥（Ed25519，更新清单走 GitHub Release） |
 
 测试/正式使用**不同**云环境或密钥时，可额外配置 `TARO_APP_CLOUD_ENV_ID_TEST`、`CLOUDBASE_SECRET_ID_TEST` 等（见 `scripts/write-env-from-secrets.mjs`）。
 
