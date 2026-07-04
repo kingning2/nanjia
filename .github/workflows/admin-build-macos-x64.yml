@@ -42,8 +42,8 @@ jobs:
           echo "PKG_CONFIG_PATH=${FFMPEG_PREFIX}/lib/pkgconfig:${VMAF_PREFIX}/lib/pkgconfig:${BREW_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}" >> "$GITHUB_ENV"
           echo "LIBRARY_PATH=${FFMPEG_PREFIX}/lib:${VMAF_PREFIX}/lib:${BREW_PREFIX}/lib:${LIBRARY_PATH}" >> "$GITHUB_ENV"
           echo "DYLD_LIBRARY_PATH=${FFMPEG_PREFIX}/lib:${VMAF_PREFIX}/lib:${BREW_PREFIX}/lib:${DYLD_LIBRARY_PATH}" >> "$GITHUB_ENV"
-          echo "FFMPEG_DIR=${FFMPEG_PREFIX}" >> "$GITHUB_ENV"
           echo "VMAF_DIR=${VMAF_PREFIX}" >> "$GITHUB_ENV"
+          # macOS 走 pkg-config；不设 FFMPEG_DIR / LIBCLANG_PATH（避免继承 Windows .cargo/config）
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
