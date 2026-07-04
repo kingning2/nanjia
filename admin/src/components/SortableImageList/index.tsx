@@ -1,6 +1,7 @@
 import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
-import { App, Button, Card, Carousel, Image, Input, InputNumber, Space, Typography } from 'antd'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { App, Button, Card, Carousel, Image, Input, InputNumber, Space, Spin, Tag, Typography } from 'antd'
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
+import type { CarouselRef } from 'antd/es/carousel'
 import type { MaterialDetailImageDTO } from '@share/types/content'
 import { sortDetailImages } from '@share/types/content'
 import type { MediaFileDTO } from '@share/types/media'
@@ -67,17 +68,28 @@ function CarouselSlideImage({ item }: { item: PendingRow }) {
   )
 }
 
-function ImageCarouselPreview({ items }: { items: PendingRow[] }) {
-  const [current, setCurrent] = useState(0)
+function ImageCarouselPreview({
+  items,
+  activeIndex,
+  onActiveIndexChange,
+  carouselRef
+}: {
+  items: PendingRow[]
+  activeIndex: number
+  onActiveIndexChange?: (index: number) => void
+  carouselRef: RefObject<CarouselRef | null>
+}) {
   const slides = [...items]
     .sort((a, b) => a.sort - b.sort)
     .filter((item) => item.previewUrl || item.image?.trim())
 
   useEffect(() => {
-    if (current >= slides.length) {
-      setCurrent(Math.max(0, slides.length - 1))
+    if (activeIndex >= slides.length) {
+      onActiveIndexChange?.(Math.max(0, slides.length - 1))
+      return
     }
-  }, [current, slides.length])
+    carouselRef.current?.goTo(activeIndex, false)
+  }, [activeIndex, carouselRef, onActiveIndexChange, slides.length])
 
   if (!slides.length) {
     return (
@@ -90,10 +102,11 @@ function ImageCarouselPreview({ items }: { items: PendingRow[] }) {
   return (
     <div className={styles.carouselFrame}>
       <Carousel
+        ref={carouselRef}
         key={slides.map((item) => `${item.sort}-${item.image || item.previewUrl}`).join('|')}
         dots={slides.length > 1}
         slidesToShow={1}
-        afterChange={setCurrent}
+        afterChange={onActiveIndexChange}
         draggable
       >
         {slides.map((item, index) => (
@@ -108,29 +121,25 @@ function ImageCarouselPreview({ items }: { items: PendingRow[] }) {
   )
 }
 
-function RowThumb({ item }: { item: PendingRow }) {
+function RowThumb({ item, size = 96 }: { item: PendingRow; size?: number }) {
+  const style = { width: size, height: size, objectFit: 'cover' as const }
+
   if (item.previewUrl) {
     return (
-      <div className={styles.thumbWrap}>
-        <Image
-          src={item.previewUrl}
-          width={96}
-          height={96}
-          style={{ objectFit: 'cover' }}
-          preview={{ mask: '预览' }}
-        />
+      <div className={styles.thumbWrap} style={{ width: size, height: size }}>
+        <Image src={item.previewUrl} width={size} height={size} style={style} preview={{ mask: '预览' }} />
       </div>
     )
   }
 
   if (item.image) {
     return (
-      <div className={styles.thumbWrap}>
+      <div className={styles.thumbWrap} style={{ width: size, height: size }}>
         <CloudImage
           src={item.image}
-          width={96}
-          height={96}
-          style={{ objectFit: 'cover' }}
+          width={size}
+          height={size}
+          style={style}
           preview={{ mask: '预览' }}
           fallbackLabel='无预览'
         />
@@ -138,7 +147,11 @@ function RowThumb({ item }: { item: PendingRow }) {
     )
   }
 
-  return <div className={styles.thumb}>无图</div>
+  return (
+    <div className={styles.thumb} style={{ width: size, height: size }}>
+      无图
+    </div>
+  )
 }
 
 export default function SortableImageList({
@@ -156,6 +169,8 @@ export default function SortableImageList({
   const deferCtx = useDeferredUploadOptional()
   const [pendingRows, setPendingRows] = useState<PendingRow[]>([])
   const [uploading, setUploading] = useState(false)
+  const [previewIndex, setPreviewIndex] = useState(0)
+  const carouselRef = useRef<CarouselRef>(null)
   const valueRef = useRef(value)
   const pendingRowsRef = useRef<PendingRow[]>(pendingRows)
   valueRef.current = value
@@ -253,14 +268,9 @@ export default function SortableImageList({
           previewUrl: URL.createObjectURL(new Blob([copy], { type: 'image/webp' }))
         }
       })
-      message.info(
-        added.length === 1
-          ? `已添加 ${items[0].file.name}，保存表单时将上传`
-          : `已添加 ${added.length} 张图片，保存表单时将上传`
-      )
       return [...prev, ...added]
     })
-  }, [message])
+  }, [])
 
   const handleFilesPicked = useCallback(
     async (items: PickedImagePayload[]) => {
@@ -295,7 +305,6 @@ export default function SortableImageList({
     setUploading(true)
     try {
       let saved = sortDetailImages(valueRef.current)
-      const remaining: PendingRow[] = []
       const total = pendingRows.length
 
       for (const [index, row] of (sortDetailImages(pendingRows) as PendingRow[]).entries()) {
@@ -316,12 +325,8 @@ export default function SortableImageList({
         if (row.previewUrl) URL.revokeObjectURL(row.previewUrl)
       }
 
-      setPendingRows(remaining)
-      message.success({
-        key: messageKey,
-        content:
-          total === 1 ? '图片上传完成（1/1）' : `图片上传完成（${total}/${total}）`
-      })
+      setPendingRows([])
+      message.destroy(messageKey)
       return true
     } catch {
       message.destroy(messageKey)
@@ -344,48 +349,72 @@ export default function SortableImageList({
           <Typography.Text type='secondary' className={styles.sectionLabel}>
             小程序预览
           </Typography.Text>
-          <ImageCarouselPreview items={displayItems} />
+          <ImageCarouselPreview
+            items={displayItems}
+            activeIndex={previewIndex}
+            onActiveIndexChange={setPreviewIndex}
+            carouselRef={carouselRef}
+          />
         </div>
 
         <div className={styles.controlColumn}>
-          <Typography.Text type='secondary' className={styles.sectionLabel}>
-            配图列表
-          </Typography.Text>
+          <div className={styles.controlHeader}>
+            <Typography.Text type='secondary' className={styles.sectionLabel}>
+              配图列表（{displayItems.length}）
+            </Typography.Text>
+            {uploading ? <Spin size='small' tip='上传中' /> : null}
+          </div>
 
-          {displayItems.map((item, index) => (
-            <div key={`${item.sort}-${item.image}-${index}`} className={styles.imageRow}>
-              <RowThumb item={item} />
-              <div className={styles.rowMeta}>
-                <Typography.Text type='secondary'>第 {index + 1} 张</Typography.Text>
-                <br />
-                <Typography.Text type='secondary' style={{ fontSize: 12 }}>
-                  sort: {item.sort}
-                  {item.pendingFile ? ' · 待上传' : ''}
-                </Typography.Text>
+          <div className={styles.thumbGrid}>
+            {displayItems.map((item, index) => (
+              <div
+                key={`${item.sort}-${item.image}-${index}`}
+                className={`${styles.thumbCell} ${index === previewIndex ? styles.thumbCellActive : ''}`}
+                onClick={() => setPreviewIndex(index)}
+              >
+                <RowThumb item={item} size={72} />
+                <span className={styles.thumbIndex}>{index + 1}</span>
+                {item.pendingFile ? (
+                  <Tag color='processing' className={styles.pendingTag}>
+                    待上传
+                  </Tag>
+                ) : null}
+                <div className={styles.thumbActions}>
+                  <Button
+                    type='text'
+                    size='small'
+                    icon={<ArrowUpOutlined />}
+                    disabled={index === 0 || uploading}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      move(index, -1)
+                    }}
+                  />
+                  <Button
+                    type='text'
+                    size='small'
+                    icon={<ArrowDownOutlined />}
+                    disabled={index === displayItems.length - 1 || uploading}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      move(index, 1)
+                    }}
+                  />
+                  <Button
+                    type='text'
+                    size='small'
+                    danger
+                    icon={<DeleteOutlined />}
+                    disabled={uploading}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      removeItem(index)
+                    }}
+                  />
+                </div>
               </div>
-              <Space className={styles.rowActions} size={4}>
-                <Button
-                  size='small'
-                  icon={<ArrowUpOutlined />}
-                  disabled={index === 0 || uploading}
-                  onClick={() => move(index, -1)}
-                />
-                <Button
-                  size='small'
-                  icon={<ArrowDownOutlined />}
-                  disabled={index === displayItems.length - 1 || uploading}
-                  onClick={() => move(index, 1)}
-                />
-                <Button
-                  size='small'
-                  danger
-                  icon={<DeleteOutlined />}
-                  disabled={uploading}
-                  onClick={() => removeItem(index)}
-                />
-              </Space>
-            </div>
-          ))}
+            ))}
+          </div>
 
           <ImageUploadPicker
             trigger='plus'

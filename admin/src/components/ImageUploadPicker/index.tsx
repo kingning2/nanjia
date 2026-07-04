@@ -112,6 +112,7 @@ const ImageUploadPicker = forwardRef<ImageUploadPickerRef, ImageUploadPickerProp
     const [deferredPending, setDeferredPending] = useState<PendingImageCompress | null>(null)
     const [inlinePending, setInlinePending] = useState<PendingImageCompress | null>(null)
     const fileQueueRef = useRef<File[]>([])
+    const batchRef = useRef<PickedImagePayload[]>([])
     const onFilesPickedRef = useRef(onFilesPicked)
     onFilesPickedRef.current = onFilesPicked
     const startCompressRef = useRef<(file: File) => Promise<void>>(async () => {})
@@ -138,6 +139,12 @@ const ImageUploadPicker = forwardRef<ImageUploadPickerRef, ImageUploadPickerProp
       const next = fileQueueRef.current.shift()
       if (next) {
         void startCompressRef.current(next)
+        return
+      }
+      const batch = batchRef.current
+      if (batch.length > 0 && onFilesPickedRef.current) {
+        onFilesPickedRef.current([...batch])
+        batchRef.current = []
       }
     }, [])
 
@@ -152,9 +159,11 @@ const ImageUploadPicker = forwardRef<ImageUploadPickerRef, ImageUploadPickerProp
             resetDeferred()
             setDeferredPending(item)
           } else if (onFilesPickedRef.current) {
-            onFilesPickedRef.current([
-              { file: item.file, preview: item.preview, webpBytes: item.webpBytes }
-            ])
+            batchRef.current.push({
+              file: item.file,
+              preview: item.preview,
+              webpBytes: item.webpBytes
+            })
             revokePending(item)
             processNextInQueue()
           } else {

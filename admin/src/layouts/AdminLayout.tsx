@@ -6,8 +6,6 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import AppLogo from '../components/AppLogo'
 
-import EnvToolbar from '../components/EnvToolbar'
-
 import WindowTitleBar from '../components/WindowTitleBar'
 
 import { ActiveEnvProvider, useActiveEnv } from '../context/ActiveEnvContext'
@@ -97,8 +95,6 @@ function AdminLayoutShell() {
     <div className='app-shell'>
 
       <WindowTitleBar />
-
-      <EnvToolbar />
 
       <div className='app-shell-body'>
 
