@@ -1,12 +1,14 @@
 import { Image, Map, ScrollView, Text, View } from '@tarojs/components'
-import Taro, { useDidShow } from '@tarojs/taro'
+import Taro from '@tarojs/taro'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { adaptContactConfig } from '@/adapters/contact'
 import { ContactConfigDTO } from '@share/types/api'
 import CustomHeader from '../../components/custom-header'
 import PageShell from '../../components/page-shell'
-import { getContactConfig } from '../../services/cloud/contact'
+import { useLoadOnFirstShow } from '../../hooks/useLoadOnFirstShow'
 import { useMiniShare } from '../../hooks/useMiniShare'
+import { getContactConfig } from '../../services/cloud/contact'
+import { hideNativeLoading, showNativeLoading } from '../../utils/native-loading'
 import { ContactConfig } from '../../types/contact'
 import './index.scss'
 
@@ -37,6 +39,7 @@ export default function ContactPage() {
   const loadContact = useCallback(async () => {
     if (loadingRef.current) return
     loadingRef.current = true
+    showNativeLoading()
     try {
       const data = await getContactConfig()
       setContact(data)
@@ -45,10 +48,11 @@ export default function ContactPage() {
       Taro.showToast({ title: '联系信息加载失败', icon: 'none' })
     } finally {
       loadingRef.current = false
+      hideNativeLoading()
     }
   }, [])
 
-  useDidShow(() => {
+  useLoadOnFirstShow(() => {
     void loadContact()
   })
 

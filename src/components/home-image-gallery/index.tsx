@@ -6,9 +6,10 @@ import './index.scss'
 
 interface HomeImageGalleryProps {
   items?: HomeImageItem[]
+  onMediaLoaded?: () => void
 }
 
-export default function HomeImageGallery({ items = [] }: HomeImageGalleryProps) {
+export default function HomeImageGallery({ items = [], onMediaLoaded }: HomeImageGalleryProps) {
   const images = useMemo(
     () => sortByOrder(items.filter((item) => item.imageUrl?.trim())),
     [items]
@@ -28,6 +29,8 @@ export default function HomeImageGallery({ items = [] }: HomeImageGalleryProps) 
               className='home-image-gallery__item'
               src={item.imageUrl}
               mode='widthFix'
+              onLoad={onMediaLoaded}
+              onError={onMediaLoaded}
             />
             {!isLast ? (
               <View className='home-image-gallery__separator' aria-hidden>

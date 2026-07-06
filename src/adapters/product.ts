@@ -4,6 +4,7 @@ import {
   ProductCatalogProjectDTO,
   MaterialCardDetailDTO
 } from '@share/types/api'
+import { sortDetailMedia } from '@share/types/content'
 import {
   ProductCatalogData,
   ProductCategoryItem,
@@ -40,7 +41,13 @@ const normalizeDetail = (item: MaterialCardDetailDTO['details'][number]): Materi
   id: item.id,
   title: item.title,
   content: item.content || '',
-  images: item.images || [],
+  media: sortDetailMedia(
+    (item.media || []).map((entry) => ({
+      type: entry.type,
+      src: entry.src?.trim() || '',
+      sort: entry.sort ?? 0
+    }))
+  ),
   sort: item.sort
 })
 

@@ -1,6 +1,5 @@
 export default defineAppConfig({
   pages: [
-    'pages/splash/index',
     'pages/home/index',
     'pages/products/index',
     'pages/xiaohongshu/index',

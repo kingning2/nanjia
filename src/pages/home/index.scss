@@ -4,10 +4,21 @@ $reveal-ms: 1.2s;
 $reveal-ease: cubic-bezier(0.4, 0, 0.2, 1);
 
 .home-page {
+  height: 100vh;
   min-height: 100vh;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: #000;
   color: $color-text;
+}
+
+.home-page__scroll {
+  flex: 1;
+  min-height: 0;
+  height: 0;
+  box-sizing: border-box;
   padding-bottom: $tabbar-float-height;
 }
 
@@ -38,14 +49,13 @@ $reveal-ease: cubic-bezier(0.4, 0, 0.2, 1);
   margin-top: -200px;
   margin-bottom: 56px;
   transition: margin-top $reveal-ms $reveal-ease;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .home-page__reveal-panel__inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 40px;
 }
 
 .home-page__reveal-panel--centered {

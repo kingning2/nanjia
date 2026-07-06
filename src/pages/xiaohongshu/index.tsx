@@ -1,14 +1,16 @@
 import { Image, Text, View } from '@tarojs/components'
-import Taro, { useDidShow } from '@tarojs/taro'
+import Taro from '@tarojs/taro'
 import { useCallback, useRef, useState } from 'react'
 import { adaptSocialConfig } from '@/adapters/social'
 import { SocialConfigDTO } from '@share/types/api'
 import CustomHeader from '../../components/custom-header'
 import PageShell from '../../components/page-shell'
 import RouteTabbar from '../../components/route-tabbar'
+import { useLoadOnFirstShow } from '../../hooks/useLoadOnFirstShow'
 import { getSocialConfig } from '../../services/cloud/social'
 import { useMiniShare } from '../../hooks/useMiniShare'
 import { SocialPageConfig } from '../../types/social'
+import { hideNativeLoading, showNativeLoading } from '../../utils/native-loading'
 import { previewCloudImage } from '../../utils/preview-image'
 import './index.scss'
 
@@ -26,6 +28,7 @@ export default function XiaohongshuPage() {
   const loadPage = useCallback(async () => {
     if (loadingRef.current) return
     loadingRef.current = true
+    showNativeLoading()
     try {
       const data = await getSocialConfig()
       setPage(data.xiaohongshu)
@@ -33,10 +36,11 @@ export default function XiaohongshuPage() {
       Taro.showToast({ title: '加载失败', icon: 'none' })
     } finally {
       loadingRef.current = false
+      hideNativeLoading()
     }
   }, [])
 
-  useDidShow(() => {
+  useLoadOnFirstShow(() => {
     void loadPage()
   })
 

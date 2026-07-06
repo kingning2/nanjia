@@ -1,20 +1,11 @@
 @use 'sass:color';
 @use '../../styles/variables' as *;
 
-.service-fab__area {
+.service-fab {
   position: fixed;
-  top: 0;
-  left: 0;
   z-index: 90;
-  pointer-events: none;
-}
-
-.service-fab__movable {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 104px;
-  height: 104px;
+  width: 72px;
+  height: 72px;
   pointer-events: auto;
 }
 

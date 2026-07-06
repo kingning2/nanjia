@@ -1,18 +1,17 @@
-import { Image, Text, View } from '@tarojs/components'
+import { Image, ScrollView, Text, Video, View } from '@tarojs/components'
 import { useDidShow } from '@tarojs/taro'
 import { NoticeBar } from '@nutui/nutui-react-taro'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { sortByOrder } from '@share/types/content'
+import HomeBootLoader from '../../components/home-boot-loader'
 import HomeCategoryActions from '../../components/home-category-actions'
 import HomeHeroCarousel from '../../components/home-hero-carousel'
 import HomeHeroIntro, { HomeHeroPhase } from '../../components/home-hero-intro'
 import HomeImageGallery from '../../components/home-image-gallery'
 import PageShell from '../../components/page-shell'
 import RouteTabbar from '../../components/route-tabbar'
-import { useDevDebug } from '../../hooks/useDevDebug'
 import { useMiniShare } from '../../hooks/useMiniShare'
 import { getPortfolioHome } from '../../services/cloud/project'
-import { getCloudEnvId } from '../../services/cloud/init'
 import {
   CarouselVideoItem,
   HomeHeroMediaType,
@@ -20,47 +19,10 @@ import {
   HomePrimaryCta
 } from '../../types/project'
 import './index.scss'
-
 // 为空时显示文字；填入艺术字图片地址后显示图片（推荐放 src/assets/home/ 下）
-const homeBrandArtImage = ''
+import homeBrandArtImage from "@/assets/icons/font.svg"
 
 type BrandLayout = 'centered' | 'below-video' | 'top'
-
-type HomeDebugState = {
-  status: 'loading' | 'ok' | 'empty' | 'error'
-  message: string
-  traceId: string
-  rawResponse: string
-  heroMediaType: string
-  videoCount: number
-  heroImageCount: number
-  galleryCount: number
-  showHero: boolean
-  heroCanPlay: boolean
-  error?: string
-}
-
-function formatDebugJson(value: unknown, maxLen = 2400): string {
-  try {
-    const text = JSON.stringify(value, null, 2)
-    return text.length > maxLen ? `${text.slice(0, maxLen)}\n...(truncated)` : text
-  } catch {
-    return String(value)
-  }
-}
-
-const initialDebug: HomeDebugState = {
-  status: 'loading',
-  message: '',
-  traceId: '',
-  rawResponse: '',
-  heroMediaType: '',
-  videoCount: 0,
-  heroImageCount: 0,
-  galleryCount: 0,
-  showHero: false,
-  heroCanPlay: false
-}
 
 export default function HomePage() {
   useMiniShare()
@@ -78,9 +40,19 @@ export default function HomePage() {
   const [preloadUrls, setPreloadUrls] = useState<string[]>([])
   const preloadedCountRef = useRef(0)
   const [brandLayout, setBrandLayout] = useState<BrandLayout>('centered')
-  const [booting, setBooting] = useState(true)
+  const [bootLoaderVisible, setBootLoaderVisible] = useState(true)
+  const [homeLoaded, setHomeLoaded] = useState(false)
+  const mediaPendingRef = useRef(0)
   const [error, setError] = useState('')
-  const [debug, setDebug] = useState<HomeDebugState>(initialDebug)
+  const [brandArtFailed, setBrandArtFailed] = useState(false)
+
+  const resetMediaTracker = useCallback((count: number) => {
+    mediaPendingRef.current = count
+  }, [])
+
+  const markMediaLoaded = useCallback(() => {
+    mediaPendingRef.current = Math.max(0, mediaPendingRef.current - 1)
+  }, [])
 
   const logHome = useCallback((event: string, extra?: Record<string, unknown>) => {
     if (extra) {
@@ -90,34 +62,11 @@ export default function HomePage() {
     console.info('[home]', event)
   }, [])
 
-  const debugEntries = useMemo(
-    () => [
-      { label: '状态', value: debug.status },
-      { label: '云环境', value: getCloudEnvId() || '(空)' },
-      { label: '轮播模式', value: debug.heroMediaType || '(空)' },
-      { label: 'message', value: debug.message || '(空)' },
-      { label: 'traceId', value: debug.traceId || '(空)' },
-      { label: '顶部视频', value: String(debug.videoCount) },
-      { label: '顶部轮播图', value: String(debug.heroImageCount) },
-      { label: '首页配图', value: String(debug.galleryCount) },
-      { label: 'showHero', value: String(debug.showHero) },
-      { label: 'heroCanPlay', value: String(debug.heroCanPlay) },
-      { label: '接口返回', value: debug.rawResponse || '(空)' },
-      ...(debug.error
-        ? [{ label: '错误', value: debug.error, tone: 'error' as const }]
-        : [])
-    ],
-    [debug]
-  )
-
-  useDevDebug('home', '首页 portfolioHome', debugEntries)
-
   const loadHome = useCallback(async () => {
     if (loadingRef.current) return
     loadingRef.current = true
     logHome('load:start')
     setError('')
-    setDebug(initialDebug)
     try {
       const result = await getPortfolioHome()
       logHome('load:success', {
@@ -165,44 +114,22 @@ export default function HomePage() {
       setHeroCanPlay(nextHeroCanPlay)
       setPreloadUrls(nextPreloadUrls)
 
-      const heroCount = mediaType === 'image' ? heroImgs.length : videos.length
-
-      setDebug({
-        status: heroCount > 0 || images.length > 0 ? 'ok' : 'empty',
-        message: result.message,
-        traceId: result.traceId || result.data.traceId || '',
-        rawResponse: formatDebugJson(result.raw),
-        heroMediaType: mediaType,
-        videoCount: videos.length,
-        heroImageCount: heroImgs.length,
-        galleryCount: images.length,
-        showHero: nextShowHero,
-        heroCanPlay: nextHeroCanPlay
-      })
+      const mediaCount =
+        (mediaType === 'video' ? videos.length : heroImgs.length) + images.length
+      resetMediaTracker(mediaCount)
     } catch (fetchError) {
       const message = fetchError instanceof Error ? fetchError.message : '加载失败'
       logHome('load:error', { message })
       setError(message)
       setShowHero(false)
       setBrandLayout('top')
-      setDebug({
-        status: 'error',
-        message: '',
-        traceId: '',
-        rawResponse: '',
-        heroMediaType: '',
-        videoCount: 0,
-        heroImageCount: 0,
-        galleryCount: 0,
-        showHero: false,
-        heroCanPlay: false,
-        error: message
-      })
+      setBootLoaderVisible(false)
+      resetMediaTracker(0)
     } finally {
       loadingRef.current = false
-      setBooting(false)
+      setHomeLoaded(true)
     }
-  }, [logHome])
+  }, [logHome, resetMediaTracker])
 
   const handleHeroPhaseChange = useCallback((phase: HomeHeroPhase) => {
     if (phase === 'playing') {
@@ -218,6 +145,15 @@ export default function HomePage() {
     }
   }, [heroCanPlay, preloadUrls.length, showHero])
 
+  const handleBootRevealComplete = useCallback(() => {
+    setBootLoaderVisible(false)
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => setBootLoaderVisible(false), 2200)
+    return () => clearTimeout(timer)
+  }, [])
+
   useDidShow(() => {
     logHome('page:didShow', { loaded: loadedRef.current })
     if (loadedRef.current) return
@@ -226,26 +162,29 @@ export default function HomePage() {
   }, [loadHome, logHome])
 
   const hasContent = showHero || homeImages.length > 0
+  const showBootLoader = bootLoaderVisible && !error
 
   return (
     <PageShell className='home-page'>
-      <View className='home-page__hero-stack'>
-        <View className={`home-page__stage home-page__stage--${brandLayout}`}>
-          {showHero && heroCanPlay ? (
-            heroMediaType === 'image' ? (
-              <HomeHeroCarousel
-                images={heroImages}
-                interval={heroInterval}
-              />
-            ) : (
-              <HomeHeroIntro
-                videos={carouselVideos}
-                onPhaseChange={handleHeroPhaseChange}
-              />
-            )
-          ) : null}
+      <HomeBootLoader visible={showBootLoader} onRevealComplete={handleBootRevealComplete} />
+      <ScrollView className='home-page__scroll' scrollY enhanced showScrollbar={false}>
+        <View className='home-page__hero-stack'>
+          <View className={`home-page__stage home-page__stage--${brandLayout}`}>
+            {showHero && heroCanPlay ? (
+              heroMediaType === 'image' ? (
+                <HomeHeroCarousel
+                  images={heroImages}
+                  interval={heroInterval}
+                />
+              ) : (
+                <HomeHeroIntro
+                  videos={carouselVideos}
+                  onPhaseChange={handleHeroPhaseChange}
+                />
+              )
+            ) : null}
+          </View>
         </View>
-      </View>
 
       {/* 预加载首屏图片：图片加载完再启动视频 */}
       {showHero && !heroCanPlay
@@ -260,12 +199,43 @@ export default function HomePage() {
           ))
         : null}
 
+      {/* 预加载顶部轮播图（图片模式） */}
+      {heroMediaType === 'image'
+        ? heroImages.map((item) => (
+            <Image
+              key={item.imageUrl}
+              src={item.imageUrl}
+              style={{ width: '1px', height: '1px', position: 'absolute', left: '-9999px', top: '-9999px' }}
+              onLoad={markMediaLoaded}
+              onError={markMediaLoaded}
+            />
+          ))
+        : null}
+
+      {/* 预加载顶部视频 */}
+      {heroMediaType === 'video'
+        ? carouselVideos.map((item) => (
+            <Video
+              key={item.videoUrl}
+              src={item.videoUrl}
+              style={{ width: '1px', height: '1px', position: 'absolute', left: '-9999px', top: '-9999px' }}
+              onLoadedMetaData={markMediaLoaded}
+              onError={markMediaLoaded}
+            />
+          ))
+        : null}
+
       <View className={`home-page__reveal-panel home-page__reveal-panel--${brandLayout}`}>
         <View className='home-page__reveal-panel__inner'>
-          {homeBrandArtImage ? (
-            <Image className='home-page__brand-art' src={homeBrandArtImage} mode='widthFix' />
+          {homeBrandArtImage && !brandArtFailed ? (
+            <Image
+              className='home-page__brand-art'
+              src={homeBrandArtImage}
+              mode='widthFix'
+              onError={() => setBrandArtFailed(true)}
+            />
           ) : (
-            <Text className='home-page__brand'>南 嘉</Text>
+            <Text className='home-page__brand'>NANJIA</Text>
           )}
           <HomeCategoryActions mode='overlay' primaryCta={primaryCta} />
         </View>
@@ -277,11 +247,12 @@ export default function HomePage() {
         </NoticeBar>
       )}
 
-      <HomeImageGallery items={homeImages} />
+      <HomeImageGallery items={homeImages} onMediaLoaded={markMediaLoaded} />
 
-      {!booting && !hasContent && !error ? (
-        <View className='home-page__empty'>暂无展示内容</View>
-      ) : null}
+        {homeLoaded && !hasContent && !error ? (
+          <View className='home-page__empty'>暂无展示内容</View>
+        ) : null}
+      </ScrollView>
 
       <RouteTabbar />
     </PageShell>

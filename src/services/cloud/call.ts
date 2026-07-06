@@ -1,7 +1,6 @@
 import Taro from '@tarojs/taro'
 import { CloudFunctionResponse } from '@share/types/response'
 import { CloudErrorShape } from '../../types/cloud'
-import { pushDevError, pushDevResponse } from '../../utils/dev-error-sink'
 import { ensureCloudInit, getCloudEnvId } from './init'
 
 declare const wx: any
@@ -51,15 +50,11 @@ export async function callCloudFunction<TData, TPayload = Record<string, unknown
     }
     if (result.code !== 0) {
       const message = result.message || '云函数业务异常'
-      pushDevError(name, message)
-      pushDevResponse(name, result)
       throw new Error(message)
     }
-    pushDevResponse(name, result)
     return result
   } catch (error) {
     const message = parseCloudError(error)
-    pushDevError(name, message)
     throw new Error(message)
   }
 }

@@ -1,7 +1,5 @@
 import { Component, PropsWithChildren } from 'react'
-import { DevDebugProvider } from './components/dev-debug-panel'
 import { ensureCloudInit } from './services/cloud/init'
-import { pushDevError } from './utils/dev-error-sink'
 
 import './app.scss'
 
@@ -16,14 +14,12 @@ class App extends Component<PropsWithChildren> {
     })
 
     ensureCloudInit().catch((error) => {
-      const message = error instanceof Error ? error.message : String(error)
-      pushDevError('cloud/init', message)
       console.error('cloud init error:', error)
     })
   }
 
   render() {
-    return <DevDebugProvider>{this.props.children}</DevDebugProvider>
+    return this.props.children
   }
 }
 

@@ -181,24 +181,22 @@
 }
 
 .product-card__title {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
   font-size: $font-md;
   font-weight: 600;
   line-height: 1.35;
   color: $color-text;
-  display: -webkit-box;
   overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-card__desc {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
   font-size: $font-xs;
   line-height: 1.45;
   color: $color-text-secondary;
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  word-break: break-word;
 }
 
 .product-card__footer {
@@ -217,5 +215,6 @@
   align-items: center;
   justify-content: center;
   padding: $space-xl $space-md;
+  font-size: $font-md;
 }
 

@@ -1,5 +1,4 @@
 import { Text, Video, View } from '@tarojs/components'
-import { Loading } from '@nutui/nutui-react-taro'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { sortByOrder } from '@share/types/content'
 import type { CarouselVideoItem } from '../../types/project'
@@ -7,7 +6,6 @@ import './index.scss'
 
 interface HomeVideoCarouselProps {
   items?: CarouselVideoItem[]
-  loading?: boolean
   tagline?: string
 }
 
@@ -15,7 +13,6 @@ type PlayerSlot = 'a' | 'b'
 
 export default function HomeVideoCarousel({
   items = [],
-  loading = false,
   tagline = 'Captured Moments, Timeless Elegance.'
 }: HomeVideoCarouselProps) {
   const slides = useMemo(
@@ -44,12 +41,8 @@ export default function HomeVideoCarousel({
     if (count > 1) advance()
   }, [advance, count])
 
-  if (loading) {
-    return (
-      <View className='home-video-carousel home-video-carousel--loading'>
-        <Loading type='circular' />
-      </View>
-    )
+  if (!count || !currentUrl) {
+    return null
   }
 
   const slotAUrl = activeSlot === 'a' ? currentUrl : preloadUrl

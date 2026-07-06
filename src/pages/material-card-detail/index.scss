@@ -29,16 +29,29 @@
 .material-card-detail-page__title {
   display: block;
   margin-bottom: $space-sm;
-  font-size: $font-md;
+  font-size: $font-lg;
   font-weight: 600;
 }
 
 .material-card-detail-page__content {
   display: block;
   color: $color-text-secondary;
-  font-size: $font-sm;
+  font-size: $font-md;
   line-height: 1.7;
   white-space: pre-wrap;
+}
+
+.material-card-detail-page__video {
+  width: 100%;
+  margin-top: $space-md;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background: #000;
+}
+
+.material-card-detail-page__video-player {
+  width: 100%;
+  min-height: 420px;
 }
 
 .material-card-detail-page__image {
@@ -65,4 +78,5 @@
   padding: $space-xl 0;
   display: flex;
   justify-content: center;
+  font-size: $font-md;
 }

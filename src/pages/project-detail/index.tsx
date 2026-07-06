@@ -1,14 +1,16 @@
 import { ScrollView, Text, View } from '@tarojs/components'
-import Taro, { useDidShow, useRouter } from '@tarojs/taro'
-import { Loading, Price } from '@nutui/nutui-react-taro'
+import Taro, { useRouter } from '@tarojs/taro'
+import { Price } from '@nutui/nutui-react-taro'
 import { useCallback, useRef, useState } from 'react'
 import AppEmpty from '../../components/app-empty'
 import CustomHeader from '../../components/custom-header'
 import LazyImage from '../../components/lazy-image'
 import PageShell from '../../components/page-shell'
 import { ProjectDetailData } from '../../adapters/project-detail'
+import { useLoadOnFirstShow } from '../../hooks/useLoadOnFirstShow'
 import { useMiniShare } from '../../hooks/useMiniShare'
 import { getProjectDetail } from '../../services/cloud/project-detail'
+import { hideNativeLoading, showNativeLoading } from '../../utils/native-loading'
 import './index.scss'
 
 const emptyDetail: ProjectDetailData = {
@@ -26,28 +28,30 @@ export default function ProjectDetailPage() {
   const projectId = params.id || ''
   const loadingRef = useRef(false)
   const [detail, setDetail] = useState<ProjectDetailData>(emptyDetail)
-  const [loading, setLoading] = useState(true)
+  const [ready, setReady] = useState(false)
 
   useMiniShare(() => ({ title: detail.projectTitle || undefined }))
 
   const loadDetail = useCallback(async () => {
     if (!projectId || loadingRef.current) return
     loadingRef.current = true
-    setLoading(true)
+    const showOverlay = !detail.projectId
+    if (showOverlay) showNativeLoading()
     try {
       const data = await getProjectDetail(projectId)
       setDetail(data)
     } catch {
       Taro.showToast({ title: '加载失败', icon: 'none' })
     } finally {
+      if (showOverlay) hideNativeLoading()
       loadingRef.current = false
-      setLoading(false)
+      setReady(true)
     }
-  }, [projectId])
+  }, [detail.projectId, projectId])
 
-  useDidShow(() => {
+  useLoadOnFirstShow(() => {
     void loadDetail()
-  })
+  }, projectId)
 
   const handleCardClick = useCallback((cardId: string, detailId?: string) => {
     const detailQuery = detailId ? `&detailId=${detailId}` : ''
@@ -61,20 +65,14 @@ export default function ProjectDetailPage() {
     >
       <CustomHeader title={detail.projectTitle || '套餐详情'} />
       <ScrollView className='project-detail-page__scroll' scrollY enhanced showScrollbar={false}>
-        {loading ? (
-          <View className='project-detail-page__loading'>
-            <Loading type='circular'>加载中...</Loading>
-          </View>
-        ) : null}
-        {!loading && !detail.projectId ? (
+        {ready && !detail.projectId ? (
           <View className='project-detail-page__empty'>
             <AppEmpty description='套餐不存在或未发布' />
           </View>
         ) : null}
-        {!loading && detail.projectId ? (
+        {ready && detail.projectId ? (
           <>
             <View className='project-detail-page__info'>
-              <Text className='project-detail-page__title'>{detail.projectTitle}</Text>
               {detail.projectDesc ? (
                 <Text className='project-detail-page__desc'>{detail.projectDesc}</Text>
               ) : null}
@@ -93,7 +91,6 @@ export default function ProjectDetailPage() {
             <View className='project-detail-page__divider' />
 
             <View className='project-detail-page__materials'>
-              <Text className='project-detail-page__section-title'>正式素材</Text>
               {detail.cards.length === 0 ? (
                 <View className='project-detail-page__materials-empty'>
                   <AppEmpty description='暂无素材卡片' />

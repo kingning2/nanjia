@@ -1,15 +1,16 @@
-import { ScrollView, Text, View } from '@tarojs/components'
-import Taro, { useDidShow, useRouter } from '@tarojs/taro'
-import { Loading } from '@nutui/nutui-react-taro'
+import { ScrollView, Text, Video, View } from '@tarojs/components'
+import Taro, { useRouter } from '@tarojs/taro'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { sortByOrder, sortDetailImages } from '@share/types/content'
+import { sortByOrder, sortDetailMedia } from '@share/types/content'
 import AppEmpty from '../../components/app-empty'
 import CustomHeader from '../../components/custom-header'
 import LazyImage from '../../components/lazy-image'
 import PageShell from '../../components/page-shell'
+import { useLoadOnFirstShow } from '../../hooks/useLoadOnFirstShow'
 import { getMaterialCardDetail } from '../../services/cloud/material-card'
 import { useMiniShare } from '../../hooks/useMiniShare'
 import { MaterialCardDetailData } from '../../types/product'
+import { hideNativeLoading, showNativeLoading } from '../../utils/native-loading'
 import { previewProtectedImages } from '../../utils/preview-image'
 import './index.scss'
 
@@ -26,7 +27,7 @@ export default function MaterialCardDetailPage() {
   const detailId = params.detailId || ''
   const loadingRef = useRef(false)
   const [detail, setDetail] = useState<MaterialCardDetailData>(emptyDetail)
-  const [loading, setLoading] = useState(true)
+  const [ready, setReady] = useState(false)
 
   const sortedDetails = useMemo(() => sortByOrder(detail.details), [detail.details])
   const pageTitle = sortedDetails[0]?.title || detail.cardTitle || '方案详情'
@@ -36,21 +37,23 @@ export default function MaterialCardDetailPage() {
   const loadDetail = useCallback(async () => {
     if (!cardId || loadingRef.current) return
     loadingRef.current = true
-    setLoading(true)
+    const showOverlay = !detail.cardId
+    if (showOverlay) showNativeLoading()
     try {
       const data = await getMaterialCardDetail(cardId, detailId || undefined)
       setDetail(data)
     } catch {
       Taro.showToast({ title: '加载失败', icon: 'none' })
     } finally {
+      if (showOverlay) hideNativeLoading()
       loadingRef.current = false
-      setLoading(false)
+      setReady(true)
     }
-  }, [cardId, detailId])
+  }, [cardId, detail.cardId, detailId])
 
-  useDidShow(() => {
+  useLoadOnFirstShow(() => {
     void loadDetail()
-  })
+  }, `${cardId}:${detailId}`)
 
   const handleImagePreview = useCallback((urls: string[], index: number) => {
     void previewProtectedImages(urls, index, 'material-detail')
@@ -69,52 +72,65 @@ export default function MaterialCardDetailPage() {
         showScrollbar={false}
       >
         <View className='material-card-detail-page__inner'>
-          {loading ? (
-            <View className='material-card-detail-page__loading'>
-              <Loading type='circular'>加载中...</Loading>
-            </View>
-          ) : null}
-          {!loading && !detail.cardId ? (
+          {ready && !detail.cardId ? (
             <View className='material-card-detail-page__empty'>
               <AppEmpty description='方案不存在或未发布' />
             </View>
           ) : null}
-          {!loading && sortedDetails.length === 0 && detail.cardId ? (
+          {ready && sortedDetails.length === 0 && detail.cardId ? (
             <View className='material-card-detail-page__empty'>
               <AppEmpty description='暂无详情内容' />
             </View>
           ) : null}
-          {!loading
+          {ready
             ? sortedDetails.map((item) => {
-                const images = sortDetailImages(item.images)
+                const media = sortDetailMedia(item.media)
+                const imageUrls = media
+                  .filter((entry) => entry.type === 'image')
+                  .map((entry) => entry.src)
                 return (
                   <View key={item.id} className='material-card-detail-page__block'>
-                    <Text className='material-card-detail-page__title'>{item.title}</Text>
                     {item.content ? (
                       <Text className='material-card-detail-page__content'>{item.content}</Text>
                     ) : null}
-                    {images.length > 0 ? (
-                      <View className='material-card-detail-page__image'>
-                        {images.map((image, imageIndex) => (
+                    {media.map((entry) =>
+                      entry.type === 'video' ? (
+                        <View
+                          key={`${item.id}-video-${entry.sort}-${entry.src}`}
+                          className='material-card-detail-page__video'
+                        >
+                          <Video
+                            className='material-card-detail-page__video-player'
+                            src={entry.src}
+                            controls
+                            showCenterPlayBtn
+                            objectFit='contain'
+                            enableProgressGesture
+                          />
+                        </View>
+                      ) : (
+                        <View
+                          key={`${item.id}-image-${entry.sort}-${entry.src}`}
+                          className='material-card-detail-page__image'
+                        >
                           <View
-                            key={`${item.id}-${image.sort}-${image.image}`}
                             className='material-card-detail-page__image-item'
                             onClick={() =>
                               handleImagePreview(
-                                images.map((entry) => entry.image),
-                                imageIndex
+                                imageUrls,
+                                imageUrls.indexOf(entry.src)
                               )
                             }
                           >
                             <LazyImage
-                              src={image.image}
+                              src={entry.src}
                               className='material-card-detail-page__image-photo'
                               mode='widthFix'
                             />
                           </View>
-                        ))}
-                      </View>
-                    ) : null}
+                        </View>
+                      )
+                    )}
                   </View>
                 )
               })

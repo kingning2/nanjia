@@ -1,6 +1,6 @@
 import { ScrollView, Text, View } from '@tarojs/components'
-import Taro, { useDidShow, useRouter } from '@tarojs/taro'
-import { Loading, Price, SearchBar } from '@nutui/nutui-react-taro'
+import Taro, { useRouter } from '@tarojs/taro'
+import { Price, SearchBar } from '@nutui/nutui-react-taro'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { sortByOrder } from '@share/types/content'
 import AppEmpty from '../../components/app-empty'
@@ -8,9 +8,12 @@ import CustomHeader from '../../components/custom-header'
 import LazyImage from '../../components/lazy-image'
 import PageShell from '../../components/page-shell'
 import RouteTabbar from '../../components/route-tabbar'
+import { useLoadOnFirstShow } from '../../hooks/useLoadOnFirstShow'
 import { useMiniShare } from '../../hooks/useMiniShare'
 import { getProductCatalog } from '../../services/cloud/product'
 import { ProductCatalogData, ProductProjectItem } from '../../types/product'
+import { openProject } from '../../utils/navigate-project'
+import { hideNativeLoading, showNativeLoading } from '../../utils/native-loading'
 import './index.scss'
 
 const emptyCatalog: ProductCatalogData = {
@@ -45,7 +48,7 @@ export default function ProductsPage() {
   const remeasureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const deepLinkHandledRef = useRef(false)
   const [catalog, setCatalog] = useState<ProductCatalogData>(emptyCatalog)
-  const [loading, setLoading] = useState(true)
+  const [ready, setReady] = useState(false)
   const [keyword, setKeyword] = useState('')
   const [activeCategoryId, setActiveCategoryId] = useState('')
   const [scrollIntoView, setScrollIntoView] = useState('')
@@ -54,7 +57,7 @@ export default function ProductsPage() {
   const loadCatalog = useCallback(async () => {
     if (loadingRef.current) return
     loadingRef.current = true
-    setLoading(true)
+    showNativeLoading()
     try {
       const data = await getProductCatalog()
       setCatalog(data)
@@ -73,13 +76,18 @@ export default function ProductsPage() {
       Taro.showToast({ title: '产品加载失败', icon: 'none' })
     } finally {
       loadingRef.current = false
-      setLoading(false)
+      hideNativeLoading()
+      setReady(true)
     }
   }, [params.categoryId])
 
-  useDidShow(() => {
+  useLoadOnFirstShow(() => {
     void loadCatalog()
   })
+
+  const handleOpenProject = useCallback((projectId: string) => {
+    void openProject(projectId)
+  }, [])
 
   const projectsByCategory = useMemo(() => {
     const map = new Map<string, ProductProjectItem[]>()
@@ -147,7 +155,7 @@ export default function ProductsPage() {
   }, [])
 
   useEffect(() => {
-    if (loading) return
+    if (!ready) return
     if (!visibleCategories.length) {
       setActiveCategoryId('')
       return
@@ -159,7 +167,7 @@ export default function ProductsPage() {
       return visibleCategories[0].id
     })
     remeasureSections()
-  }, [loading, visibleCategories, remeasureSections])
+  }, [ready, visibleCategories, remeasureSections])
 
   const syncActiveTabScroll = useCallback((categoryId: string) => {
     if (!categoryId) return
@@ -183,7 +191,7 @@ export default function ProductsPage() {
   )
 
   useEffect(() => {
-    if (loading || deepLinkHandledRef.current || !params.categoryId) return
+    if (!ready || deepLinkHandledRef.current || !params.categoryId) return
     const targetId = params.categoryId
     if (!catalog.categories.some((item) => item.id === targetId)) return
     deepLinkHandledRef.current = true
@@ -198,7 +206,7 @@ export default function ProductsPage() {
         tabClickLockRef.current = false
       }, TAB_CLICK_LOCK_MS)
     }, 120)
-  }, [loading, catalog.categories, params.categoryId, remeasureSections, syncActiveTabScroll])
+  }, [ready, catalog.categories, params.categoryId, remeasureSections, syncActiveTabScroll])
 
   const handleScroll = useCallback(
     (event: { detail: { scrollTop: number } }) => {
@@ -224,10 +232,6 @@ export default function ProductsPage() {
     [scheduleRemeasure, syncActiveTabScroll, visibleCategories]
   )
 
-  const openProject = useCallback((projectId: string) => {
-    Taro.navigateTo({ url: `/pages/project-detail/index?id=${projectId}` })
-  }, [])
-
   return (
     <PageShell className='product-page'>
       <CustomHeader title='产品' showBack={false} compact />
@@ -244,11 +248,7 @@ export default function ProductsPage() {
         />
       </View>
 
-      {loading ? (
-        <View className='product-page__loading'>
-          <Loading type='circular'>加载中...</Loading>
-        </View>
-      ) : catalog.categories.length === 0 ? (
+      {!ready ? null : catalog.categories.length === 0 ? (
         <View className='product-page__empty'>
           <AppEmpty description='暂无分类' />
         </View>
@@ -312,7 +312,7 @@ export default function ProductsPage() {
                         <View
                           key={item.id}
                           className='product-card'
-                          onClick={() => openProject(item.id)}
+                          onClick={() => handleOpenProject(item.id)}
                         >
                           <View className='product-card__cover-wrap'>
                             {item.cover ? (

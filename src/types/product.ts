@@ -22,11 +22,17 @@ export interface ProductCatalogData {
   traceId?: string
 }
 
+export interface MaterialDetailMediaItem {
+  type: 'image' | 'video'
+  src: string
+  sort: number
+}
+
 export interface MaterialDetailItem {
   id: string
   title: string
   content: string
-  images: Array<{ image: string; sort: number }>
+  media: MaterialDetailMediaItem[]
   sort: number
 }
 

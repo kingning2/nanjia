@@ -1,6 +1,7 @@
 @use './variables' as *;
 @use './mixins' as *;
 @use './nutui-theme';
+@use './boot-loader-keyframes';
 
 page {
   background: $color-bg;

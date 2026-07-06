@@ -1,8 +1,3 @@
-/** 开发 / 测试构建为 true，生产构建为 false（见各 .env.* 中 TARO_APP_DEBUG_PANEL） */
-export function isDebugPanelEnabled(): boolean {
-  return process.env.TARO_APP_DEBUG_PANEL === 'true'
-}
-
 /** 与 taro build --env 一致：development | test | production */
 export function getBuildEnv(): string {
   return process.env.TARO_APP_BUILD_ENV || 'production'

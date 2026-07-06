@@ -1,6 +1,6 @@
 import { ScrollView, Text, View } from '@tarojs/components'
-import Taro, { useDidShow, useRouter } from '@tarojs/taro'
-import { Loading, Price } from '@nutui/nutui-react-taro'
+import Taro, { useRouter } from '@tarojs/taro'
+import { Price } from '@nutui/nutui-react-taro'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { sortByOrder } from '@share/types/content'
 import AppEmpty from '../../components/app-empty'
@@ -8,9 +8,12 @@ import CatalogSectionHead, { categoryTitleZh } from '../../components/catalog-se
 import CustomHeader, { useCustomHeaderInset } from '../../components/custom-header'
 import LazyImage from '../../components/lazy-image'
 import PageShell from '../../components/page-shell'
+import { useLoadOnFirstShow } from '../../hooks/useLoadOnFirstShow'
 import { useMiniShare } from '../../hooks/useMiniShare'
 import { getProductCatalog } from '../../services/cloud/product'
 import { ProductCatalogData, ProductProjectItem } from '../../types/product'
+import { openProject } from '../../utils/navigate-project'
+import { hideNativeLoading, showNativeLoading } from '../../utils/native-loading'
 import './index.scss'
 
 const emptyCatalog: ProductCatalogData = {
@@ -26,7 +29,7 @@ export default function CategoryProjectsPage() {
   const headerInset = useCustomHeaderInset()
   const loadingRef = useRef(false)
   const [catalog, setCatalog] = useState<ProductCatalogData>(emptyCatalog)
-  const [loading, setLoading] = useState(true)
+  const [ready, setReady] = useState(false)
 
   const category = useMemo(
     () => catalog.categories.find((item) => item.id === categoryId),
@@ -44,25 +47,26 @@ export default function CategoryProjectsPage() {
   const loadCatalog = useCallback(async () => {
     if (!categoryId || loadingRef.current) return
     loadingRef.current = true
-    const showLoading = catalog.categories.length === 0
-    if (showLoading) setLoading(true)
+    const showOverlay = catalog.categories.length === 0
+    if (showOverlay) showNativeLoading()
     try {
       const data = await getProductCatalog()
       setCatalog(data)
     } catch {
       Taro.showToast({ title: '加载失败', icon: 'none' })
     } finally {
+      if (showOverlay) hideNativeLoading()
       loadingRef.current = false
-      setLoading(false)
+      setReady(true)
     }
   }, [catalog.categories.length, categoryId])
 
-  useDidShow(() => {
+  useLoadOnFirstShow(() => {
     void loadCatalog()
-  })
+  }, categoryId)
 
-  const openProject = useCallback((projectId: string) => {
-    Taro.navigateTo({ url: `/pages/project-detail/index?id=${projectId}` })
+  const handleOpenProject = useCallback((projectId: string) => {
+    void openProject(projectId)
   }, [])
 
   const headerTitle = category ? categoryTitleZh(category) : '业务板块'
@@ -73,17 +77,12 @@ export default function CategoryProjectsPage() {
       showServiceFab={false}
     >
       <CustomHeader title={headerTitle} overlay />
-      {loading ? (
-        <View className='catalog-page__loading'>
-          <Loading type='circular'>加载中...</Loading>
-        </View>
-      ) : null}
-      {!loading && !category ? (
+      {ready && !category ? (
         <View className='catalog-page__empty'>
           <AppEmpty description='分类不存在或未发布' />
         </View>
       ) : null}
-      {!loading && category ? (
+      {ready && category ? (
         <>
           <View
             className='category-projects-page__head'
@@ -104,7 +103,7 @@ export default function CategoryProjectsPage() {
             ) : (
               <View className='catalog-grid'>
                 {projects.map((item) => (
-                  <ProjectCard key={item.id} item={item} onClick={() => openProject(item.id)} />
+                  <ProjectCard key={item.id} item={item} onClick={() => handleOpenProject(item.id)} />
                 ))}
               </View>
             )}

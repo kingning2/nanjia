@@ -121,13 +121,15 @@
 }
 
 .home-category-actions__desc {
+  display: block;
+  width: 100%;
   max-width: 240px;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
   font-size: $font-xs;
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.62);
   text-align: center;
-  display: -webkit-box;
   overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

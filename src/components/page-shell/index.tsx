@@ -1,6 +1,5 @@
 import { View } from '@tarojs/components'
 import { PropsWithChildren } from 'react'
-import DevDebugFab from '../dev-debug-fab'
 import ServiceFab from '../service-fab'
 
 type PageShellProps = PropsWithChildren<{
@@ -9,7 +8,7 @@ type PageShellProps = PropsWithChildren<{
   showServiceFab?: boolean
 }>
 
-/** 页面根容器：全局客服浮球 + 调试浮球（仅 dev/test） */
+/** 页面根容器：全局客服浮球 */
 export default function PageShell({
   className = '',
   children,
@@ -19,7 +18,6 @@ export default function PageShell({
     <View className={className ? `page-shell ${className}` : 'page-shell'}>
       {children}
       {showServiceFab ? <ServiceFab /> : null}
-      <DevDebugFab />
     </View>
   )
 }
