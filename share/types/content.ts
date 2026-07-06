@@ -4,7 +4,7 @@
  * L1 categories      分类
  * L2 projects        项目（图片 + 描述）
  * L3 material_cards  素材卡片（标题 + 图片）
- * L4 material_details 素材详情（表单：标题 + 正文 + 多图）
+ * L4 material_details 素材详情（表单：标题 + 正文 + 可排序配图/视频）
  *
  * 排序：L1～L4 均使用 sort，越小越靠前；查询默认 orderBy sort asc
  */
@@ -18,6 +18,17 @@ export type ImageRef = string
 export interface MaterialDetailImageDTO {
   image: ImageRef
   /** 越小越靠前，与同级图片唯一确定展示顺序 */
+  sort: number
+}
+
+/** 素材详情媒体类型 */
+export type MaterialDetailMediaType = 'image' | 'video'
+
+/** 详情内可排序配图/视频（统一排序） */
+export interface MaterialDetailMediaDTO {
+  type: MaterialDetailMediaType
+  /** 云存储 fileID 或 HTTPS URL */
+  src: string
   sort: number
 }
 
@@ -186,14 +197,14 @@ export interface MaterialCardSaveParams {
 
 /**
  * L4 素材详情 — 仅表单字段，无富文本/自定义块
- * 管理端：标题 Input、正文 TextArea、多图 Upload + 拖拽排序
+ * 管理端：标题 Input、正文 TextArea、配图/视频 Upload + 拖拽排序
  */
 export interface MaterialDetailDTO {
   id: string
   cardId: string
   title: string
   content: string
-  images: MaterialDetailImageDTO[]
+  media: MaterialDetailMediaDTO[]
   sort: number
   createdAt?: string
   updatedAt?: string
@@ -204,7 +215,7 @@ export interface MaterialDetailSaveParams {
   cardId: string
   title: string
   content: string
-  images: MaterialDetailImageDTO[]
+  media: MaterialDetailMediaDTO[]
   sort: number
 }
 
@@ -216,4 +227,48 @@ export function sortByOrder<T extends { sort: number }>(list: T[]): T[] {
 /** 详情配图按 sort 升序 */
 export function sortDetailImages(images: MaterialDetailImageDTO[]): MaterialDetailImageDTO[] {
   return sortByOrder(images)
+}
+
+/** 详情媒体按 sort 升序 */
+export function sortDetailMedia(media: MaterialDetailMediaDTO[]): MaterialDetailMediaDTO[] {
+  return sortByOrder(media)
+}
+
+/** 将旧版 images + video 合并为 media（读取兼容） */
+export function normalizeDetailMedia(input: {
+  media?: MaterialDetailMediaDTO[]
+  images?: MaterialDetailImageDTO[]
+  video?: string
+}): MaterialDetailMediaDTO[] {
+  const saved = (input.media ?? [])
+    .filter(
+      (item) =>
+        (item.type === 'image' || item.type === 'video') && item.src?.trim()
+    )
+    .map((item) => ({
+      type: item.type,
+      src: item.src.trim(),
+      sort: item.sort ?? 0
+    }))
+
+  if (saved.length > 0) {
+    return sortDetailMedia(saved)
+  }
+
+  const images = sortDetailImages(input.images ?? [])
+  const video = input.video?.trim() || ''
+  const legacy: MaterialDetailMediaDTO[] = []
+
+  if (video) {
+    legacy.push({ type: 'video', src: video, sort: 0 })
+    images.forEach((item, index) => {
+      legacy.push({ type: 'image', src: item.image, sort: index + 1 })
+    })
+  } else {
+    images.forEach((item) => {
+      legacy.push({ type: 'image', src: item.image, sort: item.sort })
+    })
+  }
+
+  return sortDetailMedia(legacy)
 }

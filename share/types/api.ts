@@ -110,7 +110,7 @@ export interface MaterialCardDetailItemDTO {
   id: string
   title: string
   content: string
-  images: Array<{ image: string; sort: number }>
+  media: Array<{ type: 'image' | 'video'; src: string; sort: number }>
   sort: number
 }
 

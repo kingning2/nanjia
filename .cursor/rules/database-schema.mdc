@@ -24,7 +24,7 @@ media_files（媒体库）── 被各级 cover / images 引用
 - **L1～L4 每一级都有 `sort` 字段，必填**，数字越小越靠前
 - 查询列表：默认 `orderBy('sort', 'asc')`
 - 管理端：每一级列表支持拖拽/输入序号调整排序
-- **L4 详情内多图**：`images` 为对象数组，每项含 `image` + `sort`，同样越小越靠前；保存前按 `sort` 排序
+- **L4 详情内媒体**：`media` 为对象数组，每项含 `type`（`image` / `video`）+ `src` + `sort`，配图与视频统一排序；保存前按 `sort` 排序
 
 ## 集合总览
 
@@ -97,16 +97,17 @@ media_files（媒体库）── 被各级 cover / images 引用
 | `cardId` | string | ✅ | 所属素材卡片 |
 | `title` | string | ✅ | 标题（Input） |
 | `content` | string | ✅ | 正文（TextArea） |
-| `images` | `MaterialDetailImage[]` | | 多图，见下表 |
+| `media` | `MaterialDetailMedia[]` | | 配图/视频混排，见下表 |
 | `sort` | number | ✅ | 详情条目排序（同一卡片下多条详情时） |
 | `createdAt` / `updatedAt` | string | | ISO 8601 |
 
-### `images[]` 子结构（可排序多图）
+### `media[]` 子结构（可排序配图/视频）
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `image` | string | ✅ | `fileID` 或 URL |
-| `sort` | number | ✅ | 图内排序，越小越靠前 |
+| `type` | `'image' \| 'video'` | ✅ | 媒体类型 |
+| `src` | string | ✅ | `fileID` 或 URL |
+| `sort` | number | ✅ | 越小越靠前 |
 
 示例：
 
@@ -114,13 +115,16 @@ media_files（媒体库）── 被各级 cover / images 引用
 {
   "title": "方案说明",
   "content": "正文内容……",
-  "images": [
-    { "image": "cloud://xxx/a.webp", "sort": 0 },
-    { "image": "cloud://xxx/b.webp", "sort": 1 }
+  "media": [
+    { "type": "image", "src": "cloud://xxx/a.webp", "sort": 0 },
+    { "type": "video", "src": "cloud://xxx/intro.mp4", "sort": 1 },
+    { "type": "image", "src": "cloud://xxx/b.webp", "sort": 2 }
   ],
   "sort": 0
 }
 ```
+
+> 旧版 `images` + `video` 字段读取时自动合并为 `media`；新写入仅使用 `media`。
 
 ---
 
@@ -165,11 +169,11 @@ categories._id → projects.categoryId → material_cards.projectId → material
 |------|----------|
 | L1 | 名称 + **sort 序号或拖拽排序** |
 | L2～L3 | 名称/标题 + 封面 + **sort 序号或拖拽排序** |
-| L4 | `ProFormText` title、`ProFormTextArea` content、`ProForm` 多图上传 + **图片拖拽排序** |
+| L4 | `ProFormText` title、`ProFormTextArea` content、`ProForm` 配图/视频上传 + **统一拖拽排序** |
 | 首页设置 | 顶部轮播模式（视频/图片）、轮播视频或轮播图、自动切换间隔、首页配图、首页主营分类、启动页视频、联系/社交字段 |
 
 ## 新建集合检查清单
 
 - [ ] 创建六个集合（含 `home_settings`）
 - [ ] 各级文档写入时 **必须带 sort**
-- [ ] L4 的 `images` 使用 `{ image, sort }` 结构，禁止仅用无序 `string[]`
+- [ ] L4 的 `media` 使用 `{ type, src, sort }` 结构，禁止仅用无序 `string[]`
