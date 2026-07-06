@@ -36,6 +36,47 @@ function sortDetailImages(images) {
   return sortBySort(images || [])
 }
 
+function sortDetailMedia(media) {
+  return sortBySort(media || [])
+}
+
+function normalizeDetailMedia(doc) {
+  const saved = (doc.media || [])
+    .filter(
+      (item) =>
+        item &&
+        (item.type === 'image' || item.type === 'video') &&
+        typeof item.src === 'string' &&
+        item.src.trim()
+    )
+    .map((item) => ({
+      type: item.type,
+      src: item.src.trim(),
+      sort: item.sort || 0
+    }))
+
+  if (saved.length > 0) {
+    return sortDetailMedia(saved)
+  }
+
+  const images = sortDetailImages(doc.images)
+  const video = typeof doc.video === 'string' ? doc.video.trim() : ''
+  const legacy = []
+
+  if (video) {
+    legacy.push({ type: 'video', src: video, sort: 0 })
+    images.forEach((item, index) => {
+      legacy.push({ type: 'image', src: item.image, sort: index + 1 })
+    })
+  } else {
+    images.forEach((item) => {
+      legacy.push({ type: 'image', src: item.image, sort: item.sort || 0 })
+    })
+  }
+
+  return sortDetailMedia(legacy)
+}
+
 /** 小程序只展示已发布内容（published 缺省视为 true） */
 function publishedWhere(extra = {}) {
   return {
@@ -52,5 +93,7 @@ module.exports = {
   mapDocs,
   sortBySort,
   sortDetailImages,
+  sortDetailMedia,
+  normalizeDetailMedia,
   publishedWhere
 }

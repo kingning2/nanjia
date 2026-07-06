@@ -4,7 +4,7 @@ const {
   mapDoc,
   mapDocs,
   sortBySort,
-  sortDetailImages
+  normalizeDetailMedia
 } = require('cf-shared/db')
 const { fail, makeTraceId, success, emptyWithTrace } = require('cf-shared/response')
 
@@ -32,9 +32,10 @@ exports.main = async (event) => {
       id: item.id,
       title: item.title,
       content: item.content || '',
-      images: sortDetailImages(item.images).map((image) => ({
-        image: image.image,
-        sort: image.sort
+      media: normalizeDetailMedia(item).map((entry) => ({
+        type: entry.type,
+        src: entry.src,
+        sort: entry.sort || 0
       })),
       sort: item.sort || 0
     })

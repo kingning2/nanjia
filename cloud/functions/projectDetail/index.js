@@ -1,4 +1,4 @@
-const { COLLECTIONS, db, mapDoc, mapDocs, publishedWhere, sortBySort, sortDetailImages } = require('cf-shared/db')
+const { COLLECTIONS, db, mapDoc, mapDocs, publishedWhere, sortBySort, sortDetailImages, normalizeDetailMedia } = require('cf-shared/db')
 const { fail, makeTraceId, success, emptyWithTrace } = require('cf-shared/response')
 
 /**
@@ -62,7 +62,10 @@ exports.main = async (event) => {
           id: detail.id,
           cardId: card.id,
           title: detail.title || card.title,
-          cover: sortDetailImages(detail.images || [])[0]?.image || card.cover || ''
+          cover:
+            normalizeDetailMedia(detail).find((item) => item.type === 'image')?.src ||
+            card.cover ||
+            ''
         }))
       })
     )
