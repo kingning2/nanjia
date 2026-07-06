@@ -76,7 +76,6 @@ cp .env.production.example .env.production
 | `TARO_APP_CLOUD_ENV_ID` | 云环境 ID（测试/正式相同时填这一个即可） |
 | `CLOUDBASE_SECRET_ID` | CAM SecretId |
 | `CLOUDBASE_SECRET_KEY` | CAM SecretKey |
-| `TAURI_SIGNING_PRIVATE_KEY` | 管理端自动更新签名私钥（Ed25519，更新清单走 GitHub Release） |
 
 测试/正式使用**不同**云环境或密钥时，可额外配置 `TARO_APP_CLOUD_ENV_ID_TEST`、`CLOUDBASE_SECRET_ID_TEST` 等（见 `scripts/write-env-from-secrets.mjs`）。
 
@@ -176,7 +175,6 @@ tcb fn list -e <环境ID>
 | `taro-build-weapp.mjs` | Taro 小程序构建包装（传入 development / test / production） | `pnpm build:weapp` 等 |
 | `release.mjs` | 升管理端版本号 → 提交 → 推送 → 打 tag（触发 CI 出安装包） | `pnpm release` / `pnpm release minor` |
 | `write-env-from-secrets.mjs` | 从环境变量生成 `.env.test` / `.env.production`（CI 用） | GitHub Actions 自动调用；本地 `--ci` |
-| `publish-admin-update.mjs` | 将 Tauri 更新清单写入 GitHub Release | CI 自动调用 |
 | `tauri-build.mjs` | 跨平台 Tauri release 构建入口 | `cd admin && pnpm tauri:build` |
 | `tauri-dev-windows.ps1` | Windows 本地开发：配置 FFmpeg/LLVM 后启动 `tauri dev` | `cd admin && pnpm dev:desktop` |
 | `setup-ffmpeg-windows.ps1` | 首次下载 Windows FFmpeg shared 库（被 `tauri-dev-windows.ps1` 调用） | 一般无需手动执行 |
