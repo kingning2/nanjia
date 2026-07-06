@@ -149,7 +149,6 @@ const secretKey = adminEnv.CLOUDBASE_SECRET_KEY
 
 const expectedFunctions = [
   'portfolioHome',
-  'splashConfig',
   'contactConfig',
   'socialConfig',
   'projectDetail',

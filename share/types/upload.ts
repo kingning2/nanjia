@@ -79,3 +79,45 @@ export interface PickedImagePayload {
   preview: ImageCompressPreviewDTO
   webpBytes: Uint8Array
 }
+
+/** Tauri 图片压缩进度事件名（与 Rust `PROGRESS_EVENT` 一致） */
+export const IMAGE_COMPRESS_PROGRESS_EVENT = 'image-compress-progress' as const
+
+/** 批量/目录压缩实时进度（`image-compress-progress` 事件载荷） */
+export interface ImageCompressProgressDTO {
+  sessionId: string
+  total: number
+  completed: number
+  succeeded: number
+  failed: number
+  bytesIn: number
+  bytesOut: number
+  elapsedMs: number
+  imagesPerSec: number
+  etaSecs?: number | null
+  compressionRatio?: number | null
+}
+
+/** 批量请求体切片清单（`x-batch-manifest` 头） */
+export interface BatchManifestEntryDTO {
+  name: string
+  offset: number
+  length: number
+}
+
+/** 单张批量压缩结果（含文件名标签） */
+export interface BatchImageCompressItemDTO extends ImageCompressPreviewDTO {
+  label: string
+}
+
+/** Rust 端批量压缩返回 */
+export interface BatchImageCompressResultDTO {
+  items: BatchImageCompressItemDTO[]
+  total: number
+  succeeded: number
+  failed: number
+  bytesIn: number
+  bytesOut: number
+  elapsedMs: number
+  failures: Array<{ path: string; reason: string }>
+}

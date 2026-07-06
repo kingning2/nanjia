@@ -41,6 +41,17 @@
   justify-content: center;
 }
 
+.progressWrap {
+  width: 100%;
+  max-width: 360px;
+}
+
+.progressLabel {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
 @media (max-width: 768px) {
   .previewBody {
     flex-direction: column;

@@ -1,5 +1,5 @@
 import { CloseOutlined, InboxOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
-import { App, Button, Space, Spin, Typography, Upload } from 'antd'
+import { App, Button, Progress, Space, Typography, Upload } from 'antd'
 import type { UploadProps } from 'antd'
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from 'react'
 import type { MediaFileDTO } from '@share/types/media'
@@ -8,7 +8,7 @@ import { UPLOAD_WEBP_MAX_BYTES } from '@share/types/upload'
 import { uploadWebpBytes, validateImageFile } from '../../services/cloud/upload'
 import { formatFileSize } from '../../utils/feedback'
 import {
-  compressImageFile,
+  compressImageFiles,
   revokePendingImage,
   type PendingImageCompress
 } from '../../utils/imageCompressPending'
@@ -34,6 +34,18 @@ interface ImageUploadPickerProps {
   onFilesPicked?: (items: PickedImagePayload[]) => void
   onUploaded?: (result: MediaFileDTO) => void
   disabled?: boolean
+}
+
+function CompressProgressBar({ done, total }: { done: number; total: number }) {
+  const percent = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0
+  return (
+    <div className={styles.progressWrap}>
+      <Progress percent={percent} size='small' status='active' showInfo={false} />
+      <Typography.Text type='secondary' className={styles.progressLabel}>
+        正在压缩 {Math.min(done, total)}/{total}
+      </Typography.Text>
+    </div>
+  )
 }
 
 function formatDimensions(width?: number, height?: number): string {
@@ -108,14 +120,14 @@ const ImageUploadPicker = forwardRef<ImageUploadPickerRef, ImageUploadPickerProp
   ) {
     const { message } = App.useApp()
     const [compressing, setCompressing] = useState(false)
+    const [compressProgress, setCompressProgress] = useState<{ done: number; total: number } | null>(
+      null
+    )
     const [uploading, setUploading] = useState(false)
     const [deferredPending, setDeferredPending] = useState<PendingImageCompress | null>(null)
     const [inlinePending, setInlinePending] = useState<PendingImageCompress | null>(null)
-    const fileQueueRef = useRef<File[]>([])
-    const batchRef = useRef<PickedImagePayload[]>([])
     const onFilesPickedRef = useRef(onFilesPicked)
     onFilesPickedRef.current = onFilesPicked
-    const startCompressRef = useRef<(file: File) => Promise<void>>(async () => {})
 
     const revokePending = useCallback((item: PendingImageCompress | null) => {
       revokePendingImage(item)
@@ -135,51 +147,61 @@ const ImageUploadPicker = forwardRef<ImageUploadPickerRef, ImageUploadPickerProp
       })
     }, [revokePending])
 
-    const processNextInQueue = useCallback(() => {
-      const next = fileQueueRef.current.shift()
-      if (next) {
-        void startCompressRef.current(next)
-        return
-      }
-      const batch = batchRef.current
-      if (batch.length > 0 && onFilesPickedRef.current) {
-        onFilesPickedRef.current([...batch])
-        batchRef.current = []
-      }
-    }, [])
-
-    const startCompressForFile = useCallback(
+    const compressSingleForPreview = useCallback(
       async (file: File) => {
         setCompressing(true)
-
+        setCompressProgress({ done: 0, total: 1 })
         try {
-          const item = await compressImageFile(file)
+          const items = await compressImageFiles([file], (done, total) =>
+            setCompressProgress({ done, total })
+          )
+          const item = items[0]
+          if (!item) return
 
           if (deferUpload) {
             resetDeferred()
             setDeferredPending(item)
-          } else if (onFilesPickedRef.current) {
-            batchRef.current.push({
-              file: item.file,
-              preview: item.preview,
-              webpBytes: item.webpBytes
-            })
-            revokePending(item)
-            processNextInQueue()
           } else {
             resetInline()
             setInlinePending(item)
           }
-        } catch {
-          processNextInQueue()
         } finally {
+          setCompressProgress(null)
           setCompressing(false)
         }
       },
-      [deferUpload, processNextInQueue, resetDeferred, resetInline, revokePending]
+      [deferUpload, resetDeferred, resetInline]
     )
 
-    startCompressRef.current = startCompressForFile
+    const compressManyForList = useCallback(
+      async (files: File[]) => {
+        setCompressing(true)
+        setCompressProgress({ done: 0, total: files.length })
+        try {
+          const compressed = await compressImageFiles(files, (done, total) =>
+            setCompressProgress({ done, total })
+          )
+
+          const payloads: PickedImagePayload[] = compressed.map((item) => ({
+            file: item.file,
+            preview: item.preview,
+            webpBytes: item.webpBytes
+          }))
+
+          for (const item of compressed) {
+            revokePending(item)
+          }
+
+          if (payloads.length > 0) {
+            onFilesPickedRef.current?.(payloads)
+          }
+        } finally {
+          setCompressProgress(null)
+          setCompressing(false)
+        }
+      },
+      [revokePending]
+    )
 
     const uploadPending = useCallback(async (): Promise<MediaFileDTO | null> => {
       if (!deferredPending) return null
@@ -242,11 +264,20 @@ const ImageUploadPicker = forwardRef<ImageUploadPickerRef, ImageUploadPickerProp
         }
         if (valid.length === 0) return false
 
-        fileQueueRef.current = valid.slice(1)
-        void startCompressForFile(valid[0])
+        if (valid.length === 1 && !onFilesPickedRef.current) {
+          void compressSingleForPreview(valid[0])
+          return true
+        }
+
+        if (onFilesPickedRef.current) {
+          void compressManyForList(valid)
+          return true
+        }
+
+        void compressSingleForPreview(valid[0])
         return true
       },
-      [message, startCompressForFile]
+      [compressManyForList, compressSingleForPreview, message]
     )
 
     const beforeUpload: UploadProps['beforeUpload'] = (file, fileList) => {
@@ -321,7 +352,13 @@ const ImageUploadPicker = forwardRef<ImageUploadPickerRef, ImageUploadPickerProp
               <InboxOutlined />
             </p>
             <p className='ant-upload-text' style={compact ? { margin: 0, fontSize: 13 } : undefined}>
-              {uploading ? '正在上传…' : compressing ? '正在压缩…' : draggerTitle}
+              {uploading
+                ? '正在上传…'
+                : compressing
+                  ? compressProgress
+                    ? `正在压缩（${compressProgress.done}/${compressProgress.total}）…`
+                    : '正在压缩…'
+                  : draggerTitle}
             </p>
             <p className='ant-upload-hint' style={compact ? { margin: '4px 0 0', fontSize: 12 } : undefined}>
               {deferUpload
@@ -333,10 +370,8 @@ const ImageUploadPicker = forwardRef<ImageUploadPickerRef, ImageUploadPickerProp
           </Upload.Dragger>
         )}
 
-        {compressing ? (
-          <div className={styles.compressing}>
-            <Spin tip='正在转 WebP…' />
-          </div>
+        {compressing && compressProgress ? (
+          <CompressProgressBar done={compressProgress.done} total={compressProgress.total} />
         ) : null}
 
         {inlinePreview ? (

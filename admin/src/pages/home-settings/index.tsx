@@ -8,7 +8,6 @@ import { DeferredUploadProvider, useDeferredUpload } from '../../components/Defe
 import SortableCarouselVideos from '../../components/SortableCarouselVideos'
 import SortableHomeImages from '../../components/SortableHomeImages'
 import PrimaryCategoryField from '../../components/PrimaryCategoryField'
-import SplashVideoField from '../../components/SplashVideoField'
 import { getHomeSettings, saveHomeSettings } from '../../services/content'
 import { notifySuccess } from '../../utils/feedback'
 import { getCurrentPosition } from '../../utils/geolocation'
@@ -20,7 +19,7 @@ function HomeSettingsForm() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [settingsId, setSettingsId] = useState('')
-  const [activeTab, setActiveTab] = useState('splash')
+  const [activeTab, setActiveTab] = useState('home')
   const [locating, setLocating] = useState(false)
   const heroMediaType = Form.useWatch('heroMediaType', form) ?? 'video'
 
@@ -35,8 +34,6 @@ function HomeSettingsForm() {
         heroImages: data.heroImages || [],
         heroCarouselInterval: data.heroCarouselInterval ?? 4,
         images: data.images || [],
-        splashVideo: data.splashVideo,
-        splashSkipSeconds: data.splashSkipSeconds ?? 5,
         videoCompressEnabled: data.videoCompressEnabled !== false,
         defaultVideoCompressPreset: data.defaultVideoCompressPreset ?? 'standard',
         contactStoreName: data.contactStoreName,
@@ -81,8 +78,6 @@ function HomeSettingsForm() {
         heroImages: values.heroImages || [],
         heroCarouselInterval: values.heroCarouselInterval ?? 4,
         images: values.images || [],
-        splashVideo: values.splashVideo,
-        splashSkipSeconds: values.splashSkipSeconds,
         videoCompressEnabled: values.videoCompressEnabled,
         defaultVideoCompressPreset: values.defaultVideoCompressPreset,
         contactStoreName: values.contactStoreName,
@@ -129,7 +124,7 @@ function HomeSettingsForm() {
   return (
     <PageContainer
       title='系统设置'
-      subTitle='配置小程序启动页、首页、联系页与社交页内容'
+      subTitle='配置小程序首页、联系页与社交页内容'
       extra={
         <Button type='primary' loading={saving} onClick={() => void handleSave()}>
           保存
@@ -146,7 +141,6 @@ function HomeSettingsForm() {
             heroImages: [],
             heroCarouselInterval: 4,
             images: [],
-            splashSkipSeconds: 5,
             videoCompressEnabled: true,
             defaultVideoCompressPreset: 'standard'
           }}
@@ -156,29 +150,6 @@ function HomeSettingsForm() {
             onChange={setActiveTab}
             destroyInactiveTabPane={false}
             items={[
-              {
-                key: 'splash',
-                label: '启动页',
-                children: (
-                  <>
-                    <Form.Item
-                      name='splashVideo'
-                      label='启动页视频'
-                      extra='小程序冷启动时全屏播放；留空则直接进入首页'
-                    >
-                      <SplashVideoField uploadPrefix='home-settings/splash' />
-                    </Form.Item>
-                    <ProFormDigit
-                      name='splashSkipSeconds'
-                      label='跳过倒计时（秒）'
-                      min={1}
-                      max={30}
-                      fieldProps={{ precision: 0 }}
-                      extra='倒计时结束或点击跳过后进入首页'
-                    />
-                  </>
-                )
-              },
               {
                 key: 'home',
                 label: '首页',

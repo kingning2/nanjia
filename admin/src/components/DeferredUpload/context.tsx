@@ -41,14 +41,19 @@ export function DeferredUploadProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const flushAll = useCallback(async (): Promise<boolean> => {
-    for (const task of tasksRef.current) {
-      try {
-        if (!(await task())) return false
-      } catch {
-        return false
-      }
-    }
-    return true
+    const tasks = [...tasksRef.current]
+    if (tasks.length === 0) return true
+
+    const results = await Promise.all(
+      tasks.map(async (task) => {
+        try {
+          return await task()
+        } catch {
+          return false
+        }
+      })
+    )
+    return results.every(Boolean)
   }, [])
 
   const value = useMemo(

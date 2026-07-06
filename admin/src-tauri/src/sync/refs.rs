@@ -3,7 +3,6 @@ use std::collections::BTreeSet;
 
 const MEDIA_FIELDS: &[&str] = &[
     "cover",
-    "splashVideo",
     "contactWechatQr",
     "xiaohongshuQr",
     "douyinQr",

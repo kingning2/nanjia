@@ -4,7 +4,7 @@ const path = require('path')
 
 const root = __dirname
 const src = path.join(root, 'cf-shared')
-const functions = ['portfolioHome', 'splashConfig', 'contactConfig', 'socialConfig', 'projectDetail', 'materialCardDetail', 'productCatalog']
+const functions = ['portfolioHome', 'contactConfig', 'socialConfig', 'projectDetail', 'materialCardDetail', 'productCatalog']
 const skip = new Set(['node_modules', 'package-lock.json'])
 
 function copyDir(from, to) {

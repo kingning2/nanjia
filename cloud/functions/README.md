@@ -7,7 +7,6 @@ cloud/
 ├── cf-shared/          # 共享模块（不是云函数，不会出现在函数列表）
 └── functions/
     ├── portfolioHome/
-    ├── splashConfig/
     ├── projectDetail/
     └── materialCardDetail/
 ```

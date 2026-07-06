@@ -82,10 +82,6 @@ export interface HomeSettingsDTO {
   heroCarouselInterval?: number
   /** 首页展示配图（无数量上限，按 sort 排序） */
   images: MaterialDetailImageDTO[]
-  /** 启动页全屏视频（云存储 fileID） */
-  splashVideo?: string
-  /** 启动页跳过倒计时（秒），默认 5 */
-  splashSkipSeconds?: number
   /** 是否允许上传时选择视频压缩（关闭则仅原片上传） */
   videoCompressEnabled?: boolean
   /** 上传时默认选中的压缩预设 */
@@ -126,8 +122,6 @@ export interface HomeSettingsSaveParams {
   heroImages?: MaterialDetailImageDTO[]
   heroCarouselInterval?: number
   images: MaterialDetailImageDTO[]
-  splashVideo?: string
-  splashSkipSeconds?: number
   videoCompressEnabled?: boolean
   defaultVideoCompressPreset?: VideoCompressPresetDTO
   contactStoreName?: string

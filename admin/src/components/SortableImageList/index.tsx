@@ -9,7 +9,7 @@ import type { PickedImagePayload } from '@share/types/upload'
 import { useDeferredUploadOptional, useDeferredUploadTask } from '../DeferredUpload/context'
 import CloudImage from '../CloudImage'
 import ImageUploadPicker from '../ImageUploadPicker'
-import { uploadWebpBytes } from '../../services/cloud/upload'
+import { uploadWebpBatch } from '../../services/cloud/upload'
 import styles from './index.module.css'
 import { adjustActiveIndex, reorderRowsByIndex, useThumbGridDrag } from './useThumbGridDrag'
 
@@ -242,34 +242,6 @@ export default function SortableImageList({
     splitAndApply(displayItems.filter((_, i) => i !== index))
   }
 
-  const appendUploaded = useCallback(
-    (saved: MaterialDetailImageDTO[], fileID: string): MaterialDetailImageDTO[] => {
-      const next = sortDetailImages([
-        ...saved,
-        { image: fileID, sort: nextSort(saved) }
-      ])
-      onChange?.(next)
-      valueRef.current = next
-      return next
-    },
-    [onChange]
-  )
-
-  const uploadOne = useCallback(
-    async (item: PickedImagePayload, saved: MaterialDetailImageDTO[]): Promise<MediaFileDTO | null> => {
-      try {
-        const result = await uploadWebpBytes(item.webpBytes, item.file.name, uploadPrefix)
-        appendUploaded(saved, result.fileID)
-        onUploaded?.(result)
-        message.success(`上传成功：${result.originalName}`)
-        return result
-      } catch {
-        return null
-      }
-    },
-    [appendUploaded, message, onUploaded, uploadPrefix]
-  )
-
   const addPendingRows = useCallback((items: PickedImagePayload[]) => {
     setPendingRows((prev) => {
       const base = [...sortDetailImages(valueRef.current), ...prev]
@@ -289,6 +261,45 @@ export default function SortableImageList({
     })
   }, [])
 
+  const uploadPickedItems = useCallback(
+    async (items: PickedImagePayload[]) => {
+      const saved = sortDetailImages(valueRef.current)
+      let sort = nextSort(saved) - 1
+      const jobs = items.map((item) => {
+        sort += 1
+        return { item, sort }
+      })
+
+      const messageKey = 'material-detail-image-upload'
+      const results = await uploadWebpBatch(
+        jobs.map(({ item }) => ({ webpBytes: item.webpBytes, originalName: item.file.name })),
+        uploadPrefix,
+        (done, total) => {
+          message.loading({
+            key: messageKey,
+            duration: 0,
+            content: `正在上传图片（${done}/${total}）…`
+          })
+        }
+      )
+
+      const next = sortDetailImages([
+        ...saved,
+        ...results.map((result, index) => ({
+          image: result.fileID,
+          sort: jobs[index].sort
+        }))
+      ])
+      onChange?.(next)
+      valueRef.current = next
+      for (const result of results) {
+        onUploaded?.(result)
+      }
+      message.destroy(messageKey)
+    },
+    [message, onChange, onUploaded, uploadPrefix]
+  )
+
   const handleFilesPicked = useCallback(
     async (items: PickedImagePayload[]) => {
       if (items.length === 0) return
@@ -298,48 +309,55 @@ export default function SortableImageList({
       }
 
       setUploading(true)
-      const hide = message.loading('正在上传图片…', 0)
       try {
-        let saved = sortDetailImages(valueRef.current)
-        for (const item of items) {
-          const result = await uploadOne(item, saved)
-          if (result) {
-            saved = valueRef.current
-          }
-        }
+        await uploadPickedItems(items)
+      } catch {
+        message.error('部分图片上传失败，请重试')
       } finally {
-        hide()
         setUploading(false)
       }
     },
-    [addPendingRows, deferCtx, message, uploadOne]
+    [addPendingRows, deferCtx, message, uploadPickedItems]
   )
 
   const flushPendingUploads = useCallback(async (): Promise<boolean> => {
-    if (pendingRows.length === 0) return true
+    const rows = [...pendingRows]
+      .sort((a, b) => a.sort - b.sort)
+      .filter((row): row is PendingRow => !!row.pendingFile && !!row.pendingWebp)
+    if (rows.length === 0) return true
 
     const messageKey = 'material-detail-image-upload'
     setUploading(true)
     try {
-      let saved = sortDetailImages(valueRef.current)
-      const total = pendingRows.length
+      const saved = sortDetailImages(valueRef.current)
+      const results = await uploadWebpBatch(
+        rows.map((row) => ({
+          webpBytes: row.pendingWebp!,
+          originalName: row.pendingFile!.name
+        })),
+        uploadPrefix,
+        (done, total) => {
+          message.loading({
+            key: messageKey,
+            duration: 0,
+            content: `正在上传图片（${done}/${total}）…`
+          })
+        }
+      )
 
-      for (const [index, row] of (sortDetailImages(pendingRows) as PendingRow[]).entries()) {
-        if (!row.pendingFile || !row.pendingWebp) continue
-        message.loading({
-          key: messageKey,
-          duration: 0,
-          content: `正在上传图片（${index + 1}/${total}）…`
-        })
-        const result = await uploadWebpBytes(row.pendingWebp, row.pendingFile.name, uploadPrefix)
-        saved = sortDetailImages([
-          ...saved,
-          { image: result.fileID, sort: row.sort }
-        ])
-        onChange?.(saved)
-        valueRef.current = saved
+      const next = sortDetailImages([
+        ...saved,
+        ...results.map((result, index) => ({
+          image: result.fileID,
+          sort: rows[index].sort
+        }))
+      ])
+      onChange?.(next)
+      valueRef.current = next
+      for (const [index, result] of results.entries()) {
         onUploaded?.(result)
-        if (row.previewUrl) URL.revokeObjectURL(row.previewUrl)
+        const previewUrl = rows[index].previewUrl
+        if (previewUrl) URL.revokeObjectURL(previewUrl)
       }
 
       setPendingRows([])

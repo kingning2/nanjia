@@ -149,10 +149,6 @@ pub struct HomeSettingsRecord {
     pub hero_carousel_interval: Option<i64>,
     pub images: Vec<MaterialDetailImageRecord>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub splash_video: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub splash_skip_seconds: Option<i64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub video_compress_enabled: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_video_compress_preset: Option<String>,
@@ -202,8 +198,6 @@ pub struct HomeSettingsSaveParams {
     pub hero_images: Vec<MaterialDetailImageRecord>,
     pub hero_carousel_interval: Option<i64>,
     pub images: Vec<MaterialDetailImageRecord>,
-    pub splash_video: Option<String>,
-    pub splash_skip_seconds: Option<i64>,
     pub video_compress_enabled: Option<bool>,
     pub default_video_compress_preset: Option<String>,
     pub contact_store_name: Option<String>,
@@ -492,8 +486,6 @@ pub fn get_home_settings() -> Result<HomeSettingsRecord, String> {
         hero_images: Vec::new(),
         hero_carousel_interval: None,
         images: Vec::new(),
-        splash_video: None,
-        splash_skip_seconds: Some(5),
         video_compress_enabled: Some(true),
         default_video_compress_preset: Some("standard".into()),
         contact_store_name: None,
@@ -527,8 +519,6 @@ pub fn save_home_settings(params: HomeSettingsSaveParams) -> Result<HomeSettings
             "heroImages": hero_images,
             "heroCarouselInterval": params.hero_carousel_interval,
             "images": images,
-            "splashVideo": json_string_field(&params.splash_video),
-            "splashSkipSeconds": params.splash_skip_seconds,
             "videoCompressEnabled": params.video_compress_enabled,
             "defaultVideoCompressPreset": params.default_video_compress_preset,
             "contactStoreName": json_string_field(&params.contact_store_name),
@@ -556,8 +546,6 @@ pub fn save_home_settings(params: HomeSettingsSaveParams) -> Result<HomeSettings
         "heroImages": hero_images,
         "heroCarouselInterval": params.hero_carousel_interval.unwrap_or(4),
         "images": images,
-        "splashVideo": json_string_field(&params.splash_video),
-        "splashSkipSeconds": params.splash_skip_seconds.unwrap_or(5),
         "videoCompressEnabled": params.video_compress_enabled.unwrap_or(true),
         "defaultVideoCompressPreset": params
             .default_video_compress_preset
@@ -731,12 +719,6 @@ fn map_home_settings(doc: &Value) -> Option<HomeSettingsRecord> {
         hero_images: map_detail_images(doc.get("heroImages")),
         hero_carousel_interval: doc.get("heroCarouselInterval").and_then(parse_i64),
         images: map_detail_images(doc.get("images")),
-        splash_video: doc
-            .get("splashVideo")
-            .and_then(|v| v.as_str())
-            .map(str::to_string)
-            .filter(|s| !s.is_empty()),
-        splash_skip_seconds: doc.get("splashSkipSeconds").and_then(parse_i64).or(Some(5)),
         video_compress_enabled: doc.get("videoCompressEnabled").and_then(|v| v.as_bool()),
         default_video_compress_preset: doc
             .get("defaultVideoCompressPreset")

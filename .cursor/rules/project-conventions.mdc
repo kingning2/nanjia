@@ -18,7 +18,7 @@ alwaysApply: true
 nanjia-beauty/
 ├── share/types/       # 小程序 + 云函数 + 管理端 共享 DTO（@share/*）
 ├── src/               # 小程序前端（@/*）
-│   ├── pages/         # splash / home / products / contact / …
+│   ├── pages/         # home / products / contact / …
 │   ├── components/    # page-shell、dev-debug-fab、service-fab 等
 │   ├── services/cloud/
 │   ├── adapters/
@@ -37,7 +37,6 @@ nanjia-beauty/
 
 | 页面 | 路径 | 主要云函数 |
 |------|------|-----------|
-| 启动页 | `pages/splash` | `splashConfig` |
 | 首页 | `pages/home` | `portfolioHome` |
 | 产品 | `pages/products` | `productCatalog` |
 | 项目详情 | `pages/project-detail` | `projectDetail` |
@@ -47,7 +46,7 @@ nanjia-beauty/
 
 ## 云函数列表
 
-`portfolioHome` · `splashConfig` · `contactConfig` · `socialConfig` · `projectDetail` · `materialCardDetail` · `productCatalog`
+`portfolioHome` · `contactConfig` · `socialConfig` · `projectDetail` · `materialCardDetail` · `productCatalog`
 
 ## 类型分层
 

@@ -28,7 +28,6 @@ async function loadHomeSettingsDoc() {
         (doc.heroImages || []).length > 0 ||
         (doc.images || []).length > 0
     ) ||
-    docs.find((doc) => doc.splashVideo) ||
     docs[0]
 
   if (primaryCategoryId && !main.primaryCategoryId) {

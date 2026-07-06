@@ -36,6 +36,11 @@ tracing-appender = "0.2"
 # 三端统一动态链接 ffmpeg：macOS/Linux 走系统 pkg-config，Windows 用预编译 shared 库（设 FFMPEG_DIR，见 admin/README.md）
 ffmpeg-next = { version = "8.1", default-features = false, features = ["codec", "format", "software-scaling", "software-resampling"] }
 dirs = "5"
+rayon = "1.10"
+crossbeam-channel = "0.5"
+num_cpus = "1.16"
+sysinfo = "0.33"
+walkdir = "2.5"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 corelocation-rs = "0.3.7"

@@ -1,12 +1,5 @@
 /** 前后端共享的 API 契约类型（DTO），云函数返回与前端请求参数均使用此定义 */
 
-/** 启动页配置（云函数已解析为可播放 URL） */
-export interface SplashConfigDTO {
-  videoUrl: string
-  skipSeconds: number
-  traceId?: string
-}
-
 /** 联系页配置（云函数已解析微信二维码为可访问 URL） */
 export interface ContactConfigDTO {
   storeName: string

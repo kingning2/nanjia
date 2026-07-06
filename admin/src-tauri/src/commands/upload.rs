@@ -1,10 +1,11 @@
 use std::path::{Path, PathBuf};
 
 use tauri::ipc::{InvokeBody, Request};
+use tauri::Emitter;
 
 use tracing::{error, info, instrument, warn};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 
@@ -12,6 +13,10 @@ use crate::cloud::{
     database::{save_media_file, SaveMediaFileInput},
     delete_storage_reference, get_download_url_for_reference, list_media_files, upload_bytes_raw,
     upload_webp_bytes as upload_webp_to_storage, MediaFileRecord,
+};
+use crate::image_compress::{
+    self, BatchResult, DirectoryBatchOptions, EngineConfig, HardwareProfile, InMemoryBatchResult,
+    InMemoryItem, ProgressHook, ProgressSnapshot, PROGRESS_EVENT,
 };
 use crate::image_util::compress_image_to_webp;
 use crate::video_compress_config::{
@@ -63,6 +68,84 @@ fn decode_header_name(value: &str) -> String {
         .unwrap_or_else(|_| value.to_string())
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BatchManifestEntry {
+    name: String,
+    offset: usize,
+    length: usize,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImageCompressProgressEventDTO {
+    pub session_id: String,
+    pub total: u64,
+    pub completed: u64,
+    pub succeeded: u64,
+    pub failed: u64,
+    pub bytes_in: u64,
+    pub bytes_out: u64,
+    pub elapsed_ms: u64,
+    pub images_per_sec: f64,
+    pub eta_secs: Option<f64>,
+    pub compression_ratio: Option<f64>,
+}
+
+impl ImageCompressProgressEventDTO {
+    fn from_snapshot(session_id: String, snap: ProgressSnapshot) -> Self {
+        Self {
+            session_id,
+            total: snap.total,
+            completed: snap.completed,
+            succeeded: snap.succeeded,
+            failed: snap.failed,
+            bytes_in: snap.bytes_in,
+            bytes_out: snap.bytes_out,
+            elapsed_ms: snap.elapsed_ms,
+            images_per_sec: snap.images_per_sec,
+            eta_secs: snap.eta_secs,
+            compression_ratio: snap.compression_ratio,
+        }
+    }
+}
+
+fn make_progress_emitter(app: tauri::AppHandle, session_id: String) -> ProgressHook {
+    std::sync::Arc::new(move |snap| {
+        let payload = ImageCompressProgressEventDTO::from_snapshot(session_id.clone(), snap);
+        if let Err(err) = app.emit(PROGRESS_EVENT, &payload) {
+            warn!(error = %err, "图片压缩进度事件推送失败");
+        }
+    })
+}
+
+fn parse_batch_manifest(raw: &str, body_len: usize) -> Result<Vec<BatchManifestEntry>, String> {
+    let decoded = decode_header_name(raw);
+    let entries: Vec<BatchManifestEntry> =
+        serde_json::from_str(&decoded).map_err(|err| format!("批量清单解析失败: {err}"))?;
+    if entries.is_empty() {
+        return Err("批量清单为空".into());
+    }
+    for entry in &entries {
+        if entry.offset.saturating_add(entry.length) > body_len {
+            return Err(format!("文件 {} 数据越界", entry.name));
+        }
+    }
+    Ok(entries)
+}
+
+fn split_batch_body(body: &[u8], entries: &[BatchManifestEntry]) -> Vec<InMemoryItem> {
+    entries
+        .iter()
+        .enumerate()
+        .map(|(id, entry)| InMemoryItem {
+            id: id as u64,
+            label: entry.name.clone(),
+            bytes: body[entry.offset..entry.offset + entry.length].to_vec(),
+        })
+        .collect()
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ImageCompressPreviewDTO {
@@ -107,6 +190,94 @@ pub async fn preview_image_compress(
     })
     .await
     .map_err(|err| format!("预览任务异常: {err}"))?
+}
+
+/// 多图批量压缩预览（Rust 端 Rayon 并行，进度经 `image-compress-progress` 事件推送）
+#[tauri::command]
+#[instrument(skip(app, request))]
+pub async fn batch_preview_image_compress(
+    app: tauri::AppHandle,
+    request: Request<'_>,
+) -> Result<InMemoryBatchResult, String> {
+    let body = match request.body() {
+        InvokeBody::Raw(data) => data.to_vec(),
+        InvokeBody::Json(_) => {
+            return Err("请使用二进制方式上传批量图片数据".into());
+        }
+    };
+
+    if body.is_empty() {
+        return Err("批量图片数据为空".into());
+    }
+
+    let manifest_raw = header_value(&request, "x-batch-manifest")
+        .ok_or_else(|| "缺少 x-batch-manifest 请求头".to_string())?;
+    let session_id = header_value(&request, "x-session-id")
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| uuid::Uuid::new_v4().simple().to_string());
+
+    let entries = parse_batch_manifest(&manifest_raw, body.len())?;
+    let items = split_batch_body(&body, &entries);
+    let hook = make_progress_emitter(app, session_id);
+
+    info!(count = items.len(), "收到批量图片压缩请求");
+
+    tauri::async_runtime::spawn_blocking(move || image_compress::run_in_memory(items, Some(hook)))
+        .await
+        .map_err(|err| format!("批量压缩任务异常: {err}"))?
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImageCompressEngineInfoDTO {
+    pub hardware: HardwareProfile,
+    pub config: EngineConfig,
+}
+
+/// 返回当前硬件探测结果与引擎运行参数（线程数、channel 容量等）
+#[tauri::command]
+#[instrument]
+pub async fn get_image_compress_engine_info() -> Result<ImageCompressEngineInfoDTO, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let hardware = image_compress::detect_hardware();
+        let config = EngineConfig::from_hardware(&hardware);
+        Ok(ImageCompressEngineInfoDTO { hardware, config })
+    })
+    .await
+    .map_err(|err| format!("引擎信息查询异常: {err}"))?
+}
+
+/// 目录批量压缩：扫描 → 读取 → 解码压缩 → 写入（流水线，支持数万张）
+#[tauri::command]
+#[instrument]
+pub async fn batch_compress_directory(
+    app: tauri::AppHandle,
+    input_dir: String,
+    output_dir: String,
+    recursive: Option<bool>,
+    session_id: Option<String>,
+) -> Result<BatchResult, String> {
+    let input = PathBuf::from(input_dir);
+    let output = PathBuf::from(output_dir);
+    let recursive = recursive.unwrap_or(true);
+    let session_id = session_id
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| uuid::Uuid::new_v4().simple().to_string());
+    let hook = make_progress_emitter(app, session_id);
+
+    tauri::async_runtime::spawn_blocking(move || {
+        image_compress::run_directory(
+            DirectoryBatchOptions {
+                input_dir: input,
+                output_dir: output,
+                recursive,
+                output_ext: "webp".to_string(),
+            },
+            Some(hook),
+        )
+    })
+    .await
+    .map_err(|err| format!("批量压缩任务异常: {err}"))?
 }
 
 #[tauri::command]

@@ -12,15 +12,6 @@
       "ignore": ["node_modules/**", ".git/**"]
     },
     {
-      "name": "splashConfig",
-      "handler": "index.main",
-      "runtime": "Nodejs16.13",
-      "timeout": 20,
-      "memorySize": 256,
-      "installDependency": true,
-      "ignore": ["node_modules/**", ".git/**"]
-    },
-    {
       "name": "contactConfig",
       "handler": "index.main",
       "runtime": "Nodejs16.13",

@@ -20,6 +20,7 @@ pub use geolocation::get_current_position_native;
 pub use media_audit::{analyze_media_redundancy, delete_unused_media};
 pub use migrate_env::migrate_env;
 pub use upload::{
-    delete_storage_file, list_uploaded_media, preview_image_compress, resolve_storage_url,
-    upload_video_bytes, upload_webp_bytes,
+    batch_compress_directory, batch_preview_image_compress, delete_storage_file,
+    get_image_compress_engine_info, list_uploaded_media, preview_image_compress,
+    resolve_storage_url, upload_video_bytes, upload_webp_bytes,
 };

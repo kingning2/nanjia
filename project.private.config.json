@@ -69,13 +69,6 @@
           "query": "",
           "launchMode": "default",
           "scene": null
-        },
-        {
-          "name": "pages/splash/index",
-          "pathName": "pages/splash/index",
-          "query": "",
-          "launchMode": "default",
-          "scene": null
         }
       ]
     }
