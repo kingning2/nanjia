@@ -65,7 +65,6 @@ jobs:
 
       - name: Build Tauri bundle
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TARO_APP_ID: ${{ secrets.TARO_APP_ID }}
           TARO_APP_CLOUD_ENV_ID: ${{ secrets.TARO_APP_CLOUD_ENV_ID }}
           CLOUDBASE_SECRET_ID: ${{ secrets.CLOUDBASE_SECRET_ID }}
@@ -94,11 +93,3 @@ jobs:
           files: |
             admin/src-tauri/target/release/bundle/dmg/*.dmg
             admin/src-tauri/target/release/bundle/macos/*.app.tar.gz
-
-      - name: Publish updater manifest to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          node scripts/publish-admin-update.mjs --platform darwin-x86_64 --version "$VERSION" --tag "$GITHUB_REF_NAME"

@@ -94,11 +94,6 @@ ${bullets}
 | macOS Apple Silicon | \`.dmg\`、\`.app.tar.gz\` |
 | macOS Intel | \`.dmg\`、\`.app.tar.gz\` |
 | Windows x64 | NSIS \`.exe\`、\`.msi\` |
-
-### 自动更新
-
-- release 版启动后从 GitHub Release 检查更新（latest.json）
-- 详见 \`admin/README.md\`
 `
   mkdirSync(RELEASES_DIR, { recursive: true })
   const notesPath = join(RELEASES_DIR, `v${nextVersion}.md`)

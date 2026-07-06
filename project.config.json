@@ -1,13 +1,14 @@
 {
   "miniprogramRoot": "./dist",
-  "projectname": "nanjia-beauty-prod",
-  "description": "南嘉婚礼策划工作室（生产环境）",
+  "projectname": "nanjia-beauty-test",
+  "description": "南嘉婚礼策划工作室（测试环境）",
   "appid": "wx9fcf15896469bb83",
   "setting": {
     "urlCheck": true,
     "es6": false,
     "enhance": false,
-    "compileHotReLoad": false,
+    "skylineRenderEnable": false,
+    "compileHotReLoad": true,
     "postcss": true,
     "minified": true,
     "compileWorklet": false,

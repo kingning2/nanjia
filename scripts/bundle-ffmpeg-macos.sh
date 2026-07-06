@@ -68,12 +68,6 @@ repack_distributables() {
   tar -czf "$TAR_GZ" -C "$BUNDLE_MACOS" "$APP_NAME"
   echo "bundle-ffmpeg-macos: 已重建 $TAR_GZ"
 
-  if [[ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ]]; then
-    echo "bundle-ffmpeg-macos: 重新生成更新包签名 (.sig)"
-    (cd "$ROOT/admin" && pnpm exec tauri signer sign "$TAR_GZ") || \
-      echo "bundle-ffmpeg-macos: 警告：.sig 生成失败，自动更新可能不可用"
-  fi
-
   DMG_DIR="$BUNDLE_ROOT/dmg"
   mkdir -p "$DMG_DIR"
   DMG_FILE="$DMG_DIR/${PRODUCT_NAME}_${VERSION}_${ARCH_SUFFIX}.dmg"
