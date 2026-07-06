@@ -1,6 +1,6 @@
 [package]
 name = "nanjia-beauty-admin"
-version = "0.1.8"
+version = "0.1.9"
 description = "南嘉婚礼策划工作室管理端"
 authors = ["you"]
 edition = "2021"
