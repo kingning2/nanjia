@@ -1,4 +1,4 @@
-import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, HolderOutlined, PlusOutlined } from '@ant-design/icons'
 import { App, Button, Card, Carousel, Image, Input, InputNumber, Space, Spin, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import type { CarouselRef } from 'antd/es/carousel'
@@ -11,6 +11,7 @@ import CloudImage from '../CloudImage'
 import ImageUploadPicker from '../ImageUploadPicker'
 import { uploadWebpBytes } from '../../services/cloud/upload'
 import styles from './index.module.css'
+import { adjustActiveIndex, reorderRowsByIndex, useThumbGridDrag } from './useThumbGridDrag'
 
 type PendingRow = MaterialDetailImageDTO & {
   pendingFile?: File
@@ -207,6 +208,22 @@ export default function SortableImageList({
     splitAndApply(next)
   }
 
+  const reorder = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      const next = reorderRowsByIndex(displayItems, fromIndex, toIndex)
+      splitAndApply(next)
+      setPreviewIndex((current) => adjustActiveIndex(current, fromIndex, toIndex))
+    },
+    [displayItems]
+  )
+
+  const {
+    dropTarget: carouselDropTarget,
+    dragging: carouselDragging,
+    getDropProps: getCarouselDropProps,
+    getHandleProps: getCarouselHandleProps
+  } = useThumbGridDrag(reorder, uploading)
+
   const splitAndApply = (rows: PendingRow[]) => {
     const saved = rows.filter((row) => !row.pendingFile)
     const pending = rows.filter((row) => row.pendingFile)
@@ -365,41 +382,38 @@ export default function SortableImageList({
             {uploading ? <Spin size='small' tip='上传中' /> : null}
           </div>
 
+          <Typography.Text type='secondary'>拖拽右上角把手排序</Typography.Text>
+
           <div className={styles.thumbGrid}>
             {displayItems.map((item, index) => (
               <div
                 key={`${item.sort}-${item.image}-${index}`}
-                className={`${styles.thumbCell} ${index === previewIndex ? styles.thumbCellActive : ''}`}
+                className={[
+                  styles.thumbCell,
+                  index === previewIndex ? styles.thumbCellActive : '',
+                  carouselDragging === index ? styles.thumbCellDragging : '',
+                  carouselDropTarget === index ? styles.thumbCellDragOver : ''
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
                 onClick={() => setPreviewIndex(index)}
+                {...getCarouselDropProps(index)}
               >
                 <RowThumb item={item} size={72} />
                 <span className={styles.thumbIndex}>{index + 1}</span>
+                <span
+                  className={styles.dragHandle}
+                  title='拖拽排序'
+                  {...getCarouselHandleProps(index)}
+                >
+                  <HolderOutlined />
+                </span>
                 {item.pendingFile ? (
                   <Tag color='processing' className={styles.pendingTag}>
                     待上传
                   </Tag>
                 ) : null}
                 <div className={styles.thumbActions}>
-                  <Button
-                    type='text'
-                    size='small'
-                    icon={<ArrowUpOutlined />}
-                    disabled={index === 0 || uploading}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      move(index, -1)
-                    }}
-                  />
-                  <Button
-                    type='text'
-                    size='small'
-                    icon={<ArrowDownOutlined />}
-                    disabled={index === displayItems.length - 1 || uploading}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      move(index, 1)
-                    }}
-                  />
                   <Button
                     type='text'
                     size='small'

@@ -76,14 +76,14 @@ export default function MaterialDetailNewPage() {
         ]
       }}
       onBack={back}
-      initialValues={{ content: '', images: [] }}
+      initialValues={{ content: '', media: [] }}
       onFinish={async (values) => {
         try {
           await saveMaterialDetail({
             cardId,
             title: values.title,
             content: values.content,
-            images: values.images ?? [],
+            media: values.media ?? [],
             sort: nextSortValue(items)
           })
           notifySuccess('保存成功')

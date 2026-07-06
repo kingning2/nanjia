@@ -99,6 +99,15 @@ pub struct MaterialCardSaveParams {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct MaterialDetailMediaRecord {
+    #[serde(rename = "type")]
+    pub media_type: String,
+    pub src: String,
+    pub sort: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MaterialDetailImageRecord {
     pub image: String,
     pub sort: i64,
@@ -111,7 +120,7 @@ pub struct MaterialDetailRecord {
     pub card_id: String,
     pub title: String,
     pub content: String,
-    pub images: Vec<MaterialDetailImageRecord>,
+    pub media: Vec<MaterialDetailMediaRecord>,
     pub sort: i64,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
@@ -124,7 +133,7 @@ pub struct MaterialDetailSaveParams {
     pub card_id: String,
     pub title: String,
     pub content: String,
-    pub images: Vec<MaterialDetailImageRecord>,
+    pub media: Vec<MaterialDetailMediaRecord>,
     pub sort: i64,
 }
 
@@ -431,13 +440,15 @@ pub fn get_material_detail(id: &str) -> Result<Option<MaterialDetailRecord>, Str
 pub fn save_material_detail(
     params: MaterialDetailSaveParams,
 ) -> Result<MaterialDetailRecord, String> {
-    let images = sort_detail_images(params.images);
+    let media = sort_detail_media(params.media);
     if let Some(id) = params.id.clone() {
         let patch = omit_null(json!({
             "cardId": params.card_id,
             "title": params.title,
             "content": params.content,
-            "images": build_document(&images)?,
+            "media": build_document(&media)?,
+            "images": [],
+            "video": Value::Null,
             "sort": params.sort,
             "updatedAt": now_rfc3339(),
         }));
@@ -451,7 +462,9 @@ pub fn save_material_detail(
         "cardId": params.card_id,
         "title": params.title,
         "content": params.content,
-        "images": build_document(&images)?,
+        "media": build_document(&media)?,
+        "images": [],
+        "video": Value::Null,
         "sort": params.sort,
         "createdAt": created_at,
         "updatedAt": created_at,
@@ -687,13 +700,19 @@ fn map_material_card(doc: &Value) -> Option<MaterialCardRecord> {
 
 fn map_material_detail(doc: &Value) -> Option<MaterialDetailRecord> {
     let images = map_detail_images(doc.get("images"));
+    let video = doc
+        .get("video")
+        .and_then(|v| v.as_str())
+        .map(str::to_string)
+        .filter(|s| !s.is_empty());
+    let media = map_detail_media(doc.get("media"), images, video);
 
     Some(MaterialDetailRecord {
         id: document_id(doc)?,
         card_id: doc.get("cardId")?.as_str()?.to_string(),
         title: doc.get("title")?.as_str()?.to_string(),
         content: doc.get("content")?.as_str()?.to_string(),
-        images,
+        media,
         sort: doc.get("sort").and_then(parse_i64).unwrap_or(0),
         created_at: doc.get("createdAt").and_then(parse_ejson_date),
         updated_at: doc.get("updatedAt").and_then(parse_ejson_date),
@@ -825,6 +844,68 @@ fn map_detail_images(value: Option<&Value>) -> Vec<MaterialDetailImageRecord> {
             mapped
         })
         .unwrap_or_default()
+}
+
+fn map_detail_media(
+    value: Option<&Value>,
+    legacy_images: Vec<MaterialDetailImageRecord>,
+    legacy_video: Option<String>,
+) -> Vec<MaterialDetailMediaRecord> {
+    if let Some(items) = value.and_then(|v| v.as_array()) {
+        if !items.is_empty() {
+            let mut mapped = items
+                .iter()
+                .filter_map(|item| {
+                    let media_type = item.get("type")?.as_str()?;
+                    if media_type != "image" && media_type != "video" {
+                        return None;
+                    }
+                    let src = item.get("src")?.as_str()?.trim().to_string();
+                    if src.is_empty() {
+                        return None;
+                    }
+                    Some(MaterialDetailMediaRecord {
+                        media_type: media_type.to_string(),
+                        src,
+                        sort: item.get("sort").and_then(parse_i64).unwrap_or(0),
+                    })
+                })
+                .collect::<Vec<_>>();
+            mapped.sort_by_key(|item| item.sort);
+            return mapped;
+        }
+    }
+
+    let mut media = Vec::new();
+    if let Some(video) = legacy_video {
+        media.push(MaterialDetailMediaRecord {
+            media_type: "video".into(),
+            src: video,
+            sort: 0,
+        });
+        for (index, image) in legacy_images.into_iter().enumerate() {
+            media.push(MaterialDetailMediaRecord {
+                media_type: "image".into(),
+                src: image.image,
+                sort: (index as i64) + 1,
+            });
+        }
+    } else {
+        for image in legacy_images {
+            media.push(MaterialDetailMediaRecord {
+                media_type: "image".into(),
+                src: image.image,
+                sort: image.sort,
+            });
+        }
+    }
+    media.sort_by_key(|item| item.sort);
+    media
+}
+
+fn sort_detail_media(mut media: Vec<MaterialDetailMediaRecord>) -> Vec<MaterialDetailMediaRecord> {
+    media.sort_by_key(|item| item.sort);
+    media
 }
 
 fn parse_i64(value: &Value) -> Option<i64> {

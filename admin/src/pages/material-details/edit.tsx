@@ -103,7 +103,7 @@ export default function MaterialDetailEditPage() {
             cardId,
             title: values.title,
             content: values.content,
-            images: values.images ?? [],
+            media: values.media ?? [],
             sort: editing.sort
           })
           notifySuccess('保存成功')

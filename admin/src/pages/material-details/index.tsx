@@ -9,7 +9,7 @@ import type {
   MaterialDetailDTO,
   ProjectDTO
 } from '@share/types/content'
-import { sortByOrder, sortDetailImages } from '@share/types/content'
+import { sortByOrder, sortDetailMedia } from '@share/types/content'
 import ContentCard from '../../components/ContentCard'
 import ContentCardList from '../../components/ContentCardList'
 import { swapAdjacentSort } from '../../utils/contentSort'
@@ -24,8 +24,18 @@ import {
 } from '../../services/content'
 
 function detailCover(detail: MaterialDetailDTO): string | undefined {
-  const images = sortDetailImages(detail.images ?? [])
-  return images[0]?.image
+  const media = sortDetailMedia(detail.media ?? [])
+  return media.find((item) => item.type === 'image')?.src
+}
+
+function detailMediaTags(detail: MaterialDetailDTO): string {
+  const media = sortDetailMedia(detail.media ?? [])
+  const images = media.filter((item) => item.type === 'image').length
+  const videos = media.filter((item) => item.type === 'video').length
+  const parts: string[] = []
+  if (images > 0) parts.push(`配图 ${images}`)
+  if (videos > 0) parts.push(`视频 ${videos}`)
+  return parts.join(' · ') || '无媒体'
 }
 
 function detailDesc(detail: MaterialDetailDTO): string {
@@ -141,7 +151,7 @@ export default function MaterialDetailsPage() {
             cover={detailCover(item)}
             desc={detailDesc(item)}
             sort={item.sort}
-            tags={<Tag color='blue'>配图 {item.images?.length ?? 0} 张</Tag>}
+            tags={<Tag color='blue'>{detailMediaTags(item)}</Tag>}
             onClick={() => navigate(editPath(item.id))}
             onEdit={() => navigate(editPath(item.id))}
             onDelete={async () => {

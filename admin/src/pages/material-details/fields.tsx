@@ -1,6 +1,6 @@
 import { ProFormText, ProFormTextArea } from '@ant-design/pro-components'
 import { Col, Form } from 'antd'
-import SortableDetailImages from '../../components/SortableDetailImages'
+import SortableDetailMedia from '../../components/SortableDetailMedia'
 
 /** 素材详情表单字段（新建 / 编辑 共用，纯字段无逻辑） */
 export default function MaterialDetailFields() {
@@ -24,8 +24,8 @@ export default function MaterialDetailFields() {
         }}
       />
       <Col span={24}>
-        <Form.Item name='images' label='配图（可排序）' style={{ marginBottom: 0 }}>
-          <SortableDetailImages />
+        <Form.Item name='media' label='配图 / 视频（可排序）' style={{ marginBottom: 0 }}>
+          <SortableDetailMedia />
         </Form.Item>
       </Col>
     </>

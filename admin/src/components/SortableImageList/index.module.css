@@ -8,6 +8,9 @@
 .previewColumn {
   flex: 1 1 0;
   min-width: 280px;
+  /* 限制 slick 轮播轨道溢出，避免盖住右侧缩略图网格 */
+  overflow: hidden;
+  isolation: isolate;
 }
 
 .controlColumn {
@@ -16,7 +19,9 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 480px;
+  max-height: min(70vh, 640px);
+  position: relative;
+  z-index: 1;
 }
 
 .controlHeader {
@@ -54,6 +59,38 @@
 .thumbCellActive {
   border-color: #c8a96e;
   box-shadow: 0 0 0 1px rgba(200, 169, 110, 0.35);
+}
+
+.thumbCellDragging {
+  opacity: 0.45;
+}
+
+.thumbCellDragOver {
+  border-color: #c8a96e;
+  box-shadow: 0 0 0 2px rgba(200, 169, 110, 0.55);
+}
+
+.dragHandle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  cursor: grab;
+  opacity: 0.9;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
 }
 
 .thumbCell :global(.ant-image),
@@ -102,11 +139,13 @@
   gap: 2px;
   background: rgba(0, 0, 0, 0.45);
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.15s;
 }
 
 .thumbCell:hover .thumbActions {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .thumbActions :global(.ant-btn) {
@@ -140,6 +179,7 @@
 .carouselFrame :global(.slick-slider),
 .carouselFrame :global(.slick-list) {
   width: 100%;
+  overflow: hidden;
 }
 
 .carouselFrame :global(.slick-slide) {

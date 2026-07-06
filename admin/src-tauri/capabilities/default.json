@@ -14,7 +14,6 @@
     "core:window:allow-start-dragging",
     "core:window:allow-set-icon",
     "core:window:allow-set-title",
-    "dialog:default",
-    "updater:default"
+    "dialog:default"
   ]
 }

@@ -4,7 +4,6 @@ mod config;
 mod image_util;
 pub mod local;
 mod logging;
-mod updater;
 pub mod sync;
 mod video_compress_config;
 pub mod video_util;
@@ -30,7 +29,6 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             if !cfg!(debug_assertions) {
                 if let Ok(resource_dir) = app.path().resource_dir() {
@@ -57,7 +55,6 @@ pub fn run() {
                 }
             }
 
-            updater::spawn_startup_check(app.handle());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

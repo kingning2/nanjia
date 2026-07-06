@@ -50,34 +50,6 @@ pnpm tauri dev
 
   打包时需把 `bin\*.dll`（av*/sw* 运行时库）复制到 `src-tauri/ffmpeg/`，`tauri.windows.conf.json` 会将其打进安装包并置于 exe 同目录（CI 已自动处理）。
 
-## 自动更新（GitHub Release）
-
-release 版启动时会请求 GitHub Release 上的 `latest.json`，有新版本则弹出系统更新对话框。
-
-清单地址：`https://github.com/kingning2/nanjia/releases/latest/download/latest.json`
-
-### 配置
-
-1. **GitHub Secrets**：见项目根 [README.md](../README.md#github-secrets私有公开仓库-ci-打包必填)（含 `TAURI_SIGNING_PRIVATE_KEY` 等）。**勿将 `.env.*` 提交进 Git。**
-2. **仓库需公开**：客户端需能匿名拉取 Release 资源；私有仓库需另行配置 GitHub API + Token（当前未支持）。
-
-### 发布流程
-
-打 tag 后 CI 会：构建 → 上传安装包到 GitHub Release → 合并写入 `latest.json`（各平台工作流分别贡献 `darwin-aarch64` / `darwin-x86_64` / `windows-x86_64` 条目）。
-
-本地手动补写单平台 manifest（可选，需 `gh` CLI 已登录且 Release 已存在）：
-
-```bash
-# 需先 pnpm -C admin tauri:build，并设置 TAURI_SIGNING_PRIVATE_KEY
-node scripts/publish-admin-update.mjs --platform darwin-aarch64 --version 0.1.4 --tag v0.1.4
-```
-
-`platform` 取值：`darwin-aarch64` | `darwin-x86_64` | `windows-x86_64`。
-
-### 无代码签名证书说明
-
-未购买 Apple/Windows 代码签名时，更新包完整性仍由 Tauri Ed25519 签名保护；系统可能提示「无法验证开发者」，内部分发可接受。
-
 ## 目录
 
 ```
