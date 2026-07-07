@@ -22,5 +22,6 @@ pub use migrate_env::migrate_env;
 pub use upload::{
     batch_compress_directory, batch_preview_image_compress, delete_storage_file,
     get_image_compress_engine_info, list_uploaded_media, preview_image_compress,
-    resolve_storage_url, upload_video_bytes, upload_webp_bytes,
+    preview_video_compress, resolve_storage_url, upload_compressed_video_bytes,
+    upload_video_bytes, upload_webp_bytes,
 };

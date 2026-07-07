@@ -1,7 +1,6 @@
 pub mod cloud;
 mod commands;
 mod config;
-mod image_compress;
 mod image_util;
 pub mod local;
 mod logging;
@@ -16,10 +15,10 @@ use commands::{
     get_home_settings, get_material_card,
     get_material_detail, get_project, list_categories, list_env_profiles, list_material_cards,
     list_material_details, list_projects, list_uploaded_media, migrate_env, preview_image_compress,
-    resolve_storage_url, save_category, save_home_settings, save_material_card,
+    preview_video_compress, resolve_storage_url, save_category, save_home_settings, save_material_card,
     save_material_detail, save_project, set_active_env_profile, sync_env_profiles_from_files,
-    upload_video_bytes, upload_webp_bytes, batch_compress_directory, batch_preview_image_compress,
-    get_image_compress_engine_info,
+    upload_compressed_video_bytes, upload_video_bytes, upload_webp_bytes, batch_compress_directory,
+    batch_preview_image_compress, get_image_compress_engine_info,
 };
 use tauri::Manager;
 
@@ -62,6 +61,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             ensure_database,
             upload_video_bytes,
+            preview_video_compress,
+            upload_compressed_video_bytes,
             preview_image_compress,
             batch_preview_image_compress,
             batch_compress_directory,

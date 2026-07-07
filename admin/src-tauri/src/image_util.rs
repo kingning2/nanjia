@@ -1,13 +1,19 @@
-//! 图片压缩公开 API（向后兼容层，核心逻辑在 `image_compress` 模块）
+//! 图片转码公开 API（薄封装，核心在 `imgflow` crate）
 
 use std::path::Path;
 
-pub use crate::image_compress::compress_bytes_to_webp as compress_image_to_webp;
+use imgflow::EncodeOutput;
+
+pub fn compress_image_to_webp(bytes: &[u8]) -> Result<EncodeOutput, String> {
+    imgflow::transcode_bytes(bytes).map_err(|e| e.to_string())
+}
 
 pub fn convert_bytes_to_webp(bytes: &[u8]) -> Result<Vec<u8>, String> {
     Ok(compress_image_to_webp(bytes)?.bytes)
 }
 
 pub fn convert_to_webp(path: &Path) -> Result<Vec<u8>, String> {
-    Ok(crate::image_compress::compress_file_to_webp(path)?.bytes)
+    Ok(imgflow::transcode_file(path)
+        .map_err(|e| e.to_string())?
+        .bytes)
 }
