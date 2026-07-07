@@ -80,6 +80,21 @@ export interface PickedImagePayload {
   webpBytes: Uint8Array
 }
 
+/** 视频压缩预览（选视频后试编码，保存前不上传） */
+export interface VideoCompressPreviewDTO {
+  originalSize: number
+  outputSize: number
+  compressed: boolean
+  videoBase64: string
+}
+
+/** 选视频并确认压缩后的载荷（供媒体列表延迟上传） */
+export interface PickedVideoPayload {
+  file: File
+  preview: VideoCompressPreviewDTO
+  videoBytes: Uint8Array
+}
+
 /** Tauri 图片压缩进度事件名（与 Rust `PROGRESS_EVENT` 一致） */
 export const IMAGE_COMPRESS_PROGRESS_EVENT = 'image-compress-progress' as const
 
