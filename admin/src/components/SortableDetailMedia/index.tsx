@@ -8,13 +8,13 @@ import type { CarouselRef } from 'antd/es/carousel'
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import type { MaterialDetailMediaDTO } from '@share/types/content'
 import { sortDetailMedia } from '@share/types/content'
-import type { PickedImagePayload } from '@share/types/upload'
+import type { PickedImagePayload, PickedVideoPayload } from '@share/types/upload'
 import { useDeferredUploadOptional, useDeferredUploadTask } from '../DeferredUpload/context'
 import CloudImage from '../CloudImage'
 import ImageUploadPicker from '../ImageUploadPicker'
 import VideoUploadPicker from '../VideoUploadPicker'
 import { resolveStorageUrl } from '../../services/cloud/storage'
-import { uploadWebpBatch } from '../../services/cloud/upload'
+import { uploadCompressedVideoBytes, uploadWebpBatch } from '../../services/cloud/upload'
 import listStyles from '../SortableImageList/index.module.css'
 import {
   adjustActiveIndex,
@@ -25,6 +25,7 @@ import {
 type PendingRow = MaterialDetailMediaDTO & {
   pendingFile?: File
   pendingWebp?: Uint8Array
+  pendingVideoBytes?: Uint8Array
   previewUrl?: string
 }
 
@@ -188,6 +189,18 @@ function RowThumb({ item, size = 96 }: { item: PendingRow; size?: number }) {
   const style = { width: size, height: size, objectFit: 'cover' as const }
 
   if (item.type === 'video') {
+    if (item.previewUrl) {
+      return (
+        <video
+          className={listStyles.thumb}
+          src={item.previewUrl}
+          muted
+          playsInline
+          preload='metadata'
+          style={{ width: size, height: size, objectFit: 'cover' }}
+        />
+      )
+    }
     return (
       <div
         className={listStyles.thumb}
@@ -384,6 +397,25 @@ export default function SortableDetailMedia({ value = [], onChange }: SortableDe
     [addPendingRows, deferCtx, message, uploadPickedItems]
   )
 
+  const handleVideoPicked = useCallback((payload: PickedVideoPayload) => {
+    setPendingRows((prev) => {
+      const base = [...sortDetailMedia(valueRef.current), ...prev]
+      const sort = nextSort(base)
+      const copy = new Uint8Array(payload.videoBytes)
+      return [
+        ...prev,
+        {
+          type: 'video' as const,
+          src: '',
+          sort,
+          pendingFile: payload.file,
+          pendingVideoBytes: copy,
+          previewUrl: URL.createObjectURL(new Blob([copy], { type: 'video/mp4' }))
+        }
+      ]
+    })
+  }, [])
+
   const handleVideoUploaded = useCallback(
     (fileID: string) => {
       appendMedia(sortDetailMedia(valueRef.current), {
@@ -398,41 +430,69 @@ export default function SortableDetailMedia({ value = [], onChange }: SortableDe
   const flushPendingUploads = useCallback(async (): Promise<boolean> => {
     const rows = [...pendingRows]
       .sort((a, b) => a.sort - b.sort)
-      .filter((row): row is PendingRow => !!row.pendingFile && !!row.pendingWebp)
+      .filter(
+        (row): row is PendingRow =>
+          !!row.pendingFile && (!!row.pendingWebp || !!row.pendingVideoBytes)
+      )
     if (rows.length === 0) return true
 
     const messageKey = 'material-detail-media-upload'
     setUploading(true)
     try {
       const saved = sortDetailMedia(valueRef.current)
-      const results = await uploadWebpBatch(
-        rows.map((row) => ({
-          webpBytes: row.pendingWebp!,
-          originalName: row.pendingFile!.name
-        })),
-        'material-details/images',
-        (done, total) => {
-          message.loading({
-            key: messageKey,
-            duration: 0,
-            content: `正在上传图片（${done}/${total}）…`
-          })
-        }
-      )
+      const imageRows = rows.filter((row) => row.pendingWebp)
+      const videoRows = rows.filter((row) => row.pendingVideoBytes)
+
+      const imageResults =
+        imageRows.length > 0
+          ? await uploadWebpBatch(
+              imageRows.map((row) => ({
+                webpBytes: row.pendingWebp!,
+                originalName: row.pendingFile!.name
+              })),
+              'material-details/images',
+              (done, total) => {
+                message.loading({
+                  key: messageKey,
+                  duration: 0,
+                  content: `正在上传图片（${done}/${total}）…`
+                })
+              }
+            )
+          : []
+
+      const videoResults = []
+      for (const [index, row] of videoRows.entries()) {
+        message.loading({
+          key: messageKey,
+          duration: 0,
+          content: `正在上传视频（${index + 1}/${videoRows.length}）…`
+        })
+        const result = await uploadCompressedVideoBytes(
+          row.pendingVideoBytes!,
+          row.pendingFile!.name,
+          'material-details/videos'
+        )
+        videoResults.push(result)
+      }
 
       const next = sortDetailMedia([
         ...saved,
-        ...results.map((result, index) => ({
+        ...imageResults.map((result, index) => ({
           type: 'image' as const,
           src: result.fileID,
-          sort: rows[index].sort
+          sort: imageRows[index].sort
+        })),
+        ...videoResults.map((result, index) => ({
+          type: 'video' as const,
+          src: result.fileID,
+          sort: videoRows[index].sort
         }))
       ])
       onChange?.(next)
       valueRef.current = next
-      for (const [index] of results.entries()) {
-        const previewUrl = rows[index].previewUrl
-        if (previewUrl) URL.revokeObjectURL(previewUrl)
+      for (const row of rows) {
+        if (row.previewUrl) URL.revokeObjectURL(row.previewUrl)
       }
 
       setPendingRows([])
@@ -544,7 +604,8 @@ export default function SortableDetailMedia({ value = [], onChange }: SortableDe
             trigger='plus'
             disabled={uploading}
             uploadPrefix='material-details/videos'
-            onUploaded={handleVideoUploaded}
+            onVideoPicked={handleVideoPicked}
+            onUploaded={deferCtx ? undefined : handleVideoUploaded}
           />
         </Space>
       </div>

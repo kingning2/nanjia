@@ -8,7 +8,9 @@ import {
   IMAGE_COMPRESS_PROGRESS_EVENT,
   type ImageCompressProgressDTO,
   type UploadVideoOptions,
-  type VideoCompressPresetDTO
+  type VideoCompressPresetDTO,
+  type VideoCompressPreviewDTO,
+  type PickedVideoPayload
 } from '@share/types/upload'
 import { listen } from '@tauri-apps/api/event'
 import { notifyError } from '../../utils/feedback'
@@ -215,6 +217,71 @@ export function validateVideoFile(file: File): string | null {
     return '仅支持 mp4 / mov / avi / mkv / webm'
   }
   return null
+}
+
+export async function previewVideoCompress(
+  file: File,
+  options: Pick<UploadVideoOptions, 'compress' | 'preset'> = {}
+): Promise<PickedVideoPayload> {
+  const error = validateVideoFile(file)
+  if (error) {
+    notifyError(error)
+    throw new Error(error)
+  }
+
+  let body: Uint8Array
+  try {
+    body = new Uint8Array(await file.arrayBuffer())
+  } catch {
+    const msg = '读取视频失败，请换一个小文件后重试'
+    notifyError(msg)
+    throw new Error(msg)
+  }
+
+  const compress = options.compress ?? true
+  const preset: VideoCompressPresetDTO = options.preset ?? 'standard'
+  const preview = await invokeApi<VideoCompressPreviewDTO>(
+    'preview_video_compress',
+    body,
+    {
+      headers: {
+        'x-original-name': encodeURIComponent(file.name),
+        'x-video-compress': compress ? '1' : '0',
+        'x-video-compress-preset': preset
+      }
+    },
+    '视频压缩失败'
+  )
+
+  return {
+    file,
+    preview,
+    videoBytes: decodeBase64ToBytes(preview.videoBase64)
+  }
+}
+
+export async function uploadCompressedVideoBytes(
+  videoBytes: Uint8Array,
+  originalName: string,
+  prefix = 'categories/videos'
+): Promise<MediaFileDTO> {
+  if (videoBytes.length === 0) {
+    const msg = '视频数据为空'
+    notifyError(msg)
+    throw new Error(msg)
+  }
+
+  return invokeApi<MediaFileDTO>(
+    'upload_compressed_video_bytes',
+    videoBytes,
+    {
+      headers: {
+        'x-original-name': encodeURIComponent(originalName),
+        'x-upload-prefix': prefix
+      }
+    },
+    '视频上传失败'
+  )
 }
 
 export async function uploadVideoFile(
