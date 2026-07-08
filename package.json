@@ -12,6 +12,7 @@
   "scripts": {
     "prepare": "husky",
     "new": "taro new",
+    "dev": "cd admin && pnpm tauri dev",
     "clean:dist": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "install:cf": "node cloud/bundle-cf-shared.js && cd cloud/cf-shared && npm install && cd ../functions/portfolioHome && npm install && cd ../contactConfig && npm install && cd ../socialConfig && npm install && cd ../projectDetail && npm install && cd ../materialCardDetail && npm install && cd ../productCatalog && npm install",
     "deploy:cf": "node scripts/deploy-cloud-functions.mjs",
