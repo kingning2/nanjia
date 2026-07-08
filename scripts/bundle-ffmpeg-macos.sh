@@ -101,8 +101,33 @@ fi
 FRAMEWORKS="$APP/Contents/Frameworks"
 mkdir -p "$FRAMEWORKS"
 
+# Homebrew 依赖链可能引用 @rpath/libswiftCore.dylib（系统 Swift 运行时，不应打入 bundle）。
+# dylibbundler 无法解析 @rpath 时会交互式询问路径，CI 会挂死；Intel dyld 还需 LC_RPATH 含 /usr/lib/swift。
+SWIFT_RPATH=/usr/lib/swift
+
+needs_swift_rpath() {
+  otool -L "$1" 2>/dev/null | grep -q '@rpath/libswift'
+}
+
+add_swift_rpath_if_needed() {
+  local target="$1"
+  needs_swift_rpath "$target" || return 0
+  if otool -l "$target" 2>/dev/null | awk '/cmd LC_RPATH/{getline; getline; if($1=="path" && $2 ~ /\/usr\/lib\/swift/) found=1} END{exit !found}'; then
+    return 0
+  fi
+  install_name_tool -add_rpath "$SWIFT_RPATH" "$target"
+}
+
+add_swift_rpath_if_needed "$EXE"
+
 echo "bundle-ffmpeg-macos: 打包 ffmpeg 依赖 → $FRAMEWORKS"
-dylibbundler -of -b -x "$EXE" -d "$FRAMEWORKS" -p @executable_path/../Frameworks/
+dylibbundler -of -b -x "$EXE" -d "$FRAMEWORKS" -p @executable_path/../Frameworks/ \
+  -i "$SWIFT_RPATH" -i /usr/lib -i /System/Library -s "$SWIFT_RPATH"
+
+while IFS= read -r -d '' lib; do
+  add_swift_rpath_if_needed "$lib"
+done < <(find "$FRAMEWORKS" \( -name '*.dylib' -o -name '*.so' \) -print0 2>/dev/null || true)
+add_swift_rpath_if_needed "$EXE"
 
 IDENTITY="${APPLE_SIGNING_IDENTITY:--}"
 echo "bundle-ffmpeg-macos: 重新签名 (identity=${IDENTITY})"
