@@ -105,7 +105,7 @@ export default function SyncCenterPage() {
     if (!mediaReport || mediaReport.unusedCount === 0) return
     modal.confirm({
       title: '确认删除未使用的图片/视频？',
-      content: `将永久删除 ${mediaReport.unusedCount} 个未被内容引用的文件（${mediaReport.unusedImageCount} 张图片、${mediaReport.unusedVideoCount} 个视频）。云存储空间将释放，无法恢复。同名重复文件和失效引用不会被删除。`,
+      content: `将永久删除 ${mediaReport.safeUnusedCount} 个已核实未被引用的文件（共 ${mediaReport.unusedCount} 个未使用，其中 ${mediaReport.suspectUnusedCount} 个需人工确认将跳过）。云存储空间将释放，无法恢复。`,
       okText: '确认删除',
       okButtonProps: { danger: true },
       cancelText: '取消',

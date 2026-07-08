@@ -25,6 +25,16 @@ export default function MediaRedundancyModal({
 }: Props) {
   const columns: ColumnsType<MediaRedundancyItemDTO> = [
     {
+      title: '核实',
+      width: 108,
+      render: (_, row) =>
+        row.safeToDelete ? (
+          <Tag color='success'>可删除</Tag>
+        ) : (
+          <Tag color='warning'>需确认</Tag>
+        )
+    },
+    {
       title: '类型',
       width: 72,
       render: (_, row) =>
@@ -57,6 +67,9 @@ export default function MediaRedundancyModal({
   const hasIssues =
     report && (report.unusedCount > 0 || report.staleReferenceCount > 0)
 
+  const safeUnusedCount = report?.safeUnusedCount ?? 0
+  const suspectUnusedCount = report?.suspectUnusedCount ?? 0
+
   return (
     <Modal
       title='图片 / 视频检查结果'
@@ -71,8 +84,9 @@ export default function MediaRedundancyModal({
             icon={<DeleteOutlined />}
             loading={deleting}
             onClick={onDeleteUnused}
+            disabled={safeUnusedCount === 0}
           >
-            一键删除未使用文件（{report.unusedCount}）
+            删除可安全清理的文件（{safeUnusedCount}）
           </Button>
         ) : null
       }
@@ -98,7 +112,7 @@ export default function MediaRedundancyModal({
       {!report ? null : (
         <Space direction='vertical' size={16} style={{ width: '100%' }}>
           <Paragraph type='secondary' style={{ marginBottom: 0 }}>
-            已扫描「{report.envName}」环境。仅分析 media_files 里登记过、且云路径有效的文件。
+            已扫描「{report.envName}」环境全部数据库集合（media_files 除外）。仅分析媒体库里登记过、且云路径有效的文件。
           </Paragraph>
 
           <Space size={32} wrap>
@@ -123,15 +137,35 @@ export default function MediaRedundancyModal({
                     个视频）
                   </Text>
                   <Paragraph type='secondary' style={{ fontSize: 13 }}>
-                    在媒体库有登记、但分类/项目/首页等内容未引用。云存储路径即 COS 中的实际位置。
+                    在媒体库有登记、但数据库各集合中均未引用。标为「可删除」的条目还经过二次全文检索；「需确认」表示库里仍有疑似片段命中。
                   </Paragraph>
                   <Table
                     size='small'
                     rowKey='fileId'
                     columns={columns}
                     dataSource={report.unusedItems}
+                    expandable={{
+                      rowExpandable: (row) => row.referenceHits.length > 0,
+                      expandedRowRender: (row) => (
+                        <Text type='secondary' style={{ fontSize: 12 }}>
+                          疑似引用：{row.referenceHits.join('、')}
+                        </Text>
+                      )
+                    }}
                     pagination={report.unusedItems.length > 8 ? { pageSize: 8 } : false}
                   />
+                  {safeUnusedCount > 0 && suspectUnusedCount === 0 ? (
+                    <AlertLike
+                      type='success'
+                      message='未使用文件均已通过二次检索，通常可放心删除（多为重复上传的残留）。'
+                    />
+                  ) : null}
+                  {suspectUnusedCount > 0 ? (
+                    <AlertLike
+                      type='warning'
+                      message={`有 ${suspectUnusedCount} 个文件在数据库里仍有疑似片段命中，请展开查看后再决定是否删除。`}
+                    />
+                  ) : null}
                   {report.unusedCount > report.unusedItems.length ? (
                     <Text type='secondary' style={{ fontSize: 12 }}>
                       另有 {report.unusedCount - report.unusedItems.length} 个未列出
