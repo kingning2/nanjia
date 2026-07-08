@@ -34,6 +34,10 @@ export interface MediaRedundancyItemDTO {
   cloudPath: string
   mimeType: string
   kind: 'image' | 'video' | string
+  /** 二次全文检索后仍无命中，可较放心删除 */
+  safeToDelete: boolean
+  /** 数据库里命中疑似片段（需人工确认） */
+  referenceHits: string[]
 }
 
 export interface MediaRedundancyReportDTO {
@@ -45,6 +49,10 @@ export interface MediaRedundancyReportDTO {
   unusedImageCount: number
   unusedVideoCount: number
   staleReferenceCount: number
+  /** 二次检索后确认可安全删除的数量 */
+  safeUnusedCount: number
+  /** 仍有疑似命中、需人工确认的数量 */
+  suspectUnusedCount: number
   unusedItems: MediaRedundancyItemDTO[]
 }
 
