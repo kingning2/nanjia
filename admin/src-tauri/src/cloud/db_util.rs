@@ -16,6 +16,58 @@ pub fn document_path(collection: &str, id: &str) -> String {
     format!("{DB_BASE}/collections/{collection}/documents/{id}")
 }
 
+pub fn query_documents_paged(
+    client: &CloudClient,
+    collection: &str,
+    where_clause: Option<Value>,
+    limit: u32,
+    offset: u32,
+) -> Result<Value, String> {
+    let query = match &where_clause {
+        None => "{}".to_string(),
+        Some(filter) => serde_json::to_string(filter).map_err(|err| err.to_string())?,
+    };
+    let query_string = build_sorted_query(&[
+        ("limit", &limit.to_string()),
+        ("offset", &offset.to_string()),
+        ("query", &query),
+    ]);
+    let path = format!("{}?{query_string}", collection_documents_path(collection));
+    let url = client.gateway_url(&path);
+    info!(collection, url = %url, "分页查询文档");
+    let response = client.get(&path, "QueryDocuments")?;
+    ensure_success(response, "查询文档", &url)
+}
+
+pub fn list_all_collections(client: &CloudClient) -> Result<Vec<String>, String> {
+    let mut names = std::collections::BTreeSet::new();
+    let mut offset = 0u32;
+    const LIMIT: u32 = 100;
+
+    loop {
+        let query_string = build_sorted_query(&[
+            ("limit", &LIMIT.to_string()),
+            ("offset", &offset.to_string()),
+        ]);
+        let path = format!("{DB_BASE}/collections?{query_string}");
+        let url = client.gateway_url(&path);
+        info!(url = %url, "列出数据库集合");
+        let response = client.get(&path, "ListCollections")?;
+        let value = ensure_success(response, "列出集合", &url)?;
+        let batch = parse_collection_names(&value);
+        let count = batch.len();
+        for name in batch {
+            names.insert(name);
+        }
+        if count < LIMIT as usize {
+            break;
+        }
+        offset += LIMIT;
+    }
+
+    Ok(names.into_iter().collect())
+}
+
 pub fn query_documents(
     client: &CloudClient,
     collection: &str,
@@ -218,4 +270,45 @@ pub fn omit_null(mut value: Value) -> Value {
 
 pub fn build_document<T: Serialize>(value: T) -> Result<Value, String> {
     serde_json::to_value(value).map_err(|err| err.to_string())
+}
+
+fn parse_collection_names(value: &Value) -> Vec<String> {
+    extract_collection_items(value)
+        .iter()
+        .filter_map(collection_name_from_item)
+        .collect()
+}
+
+fn extract_collection_items(value: &Value) -> Vec<Value> {
+    for candidate in [
+        value.get("collections"),
+        value.pointer("/data/collections"),
+        value.get("list"),
+        value.pointer("/data/list"),
+        value.get("data").filter(|item| item.is_array()),
+    ]
+    .into_iter()
+    .flatten()
+    {
+        if let Some(items) = candidate.as_array() {
+            return items.clone();
+        }
+    }
+    Vec::new()
+}
+
+fn collection_name_from_item(item: &Value) -> Option<String> {
+    if let Some(text) = item.as_str() {
+        let name = text.trim();
+        if !name.is_empty() {
+            return Some(name.to_string());
+        }
+    }
+    item.get("name")
+        .or_else(|| item.get("collectionName"))
+        .or_else(|| item.get("CollectionName"))
+        .and_then(|v| v.as_str())
+        .map(str::trim)
+        .filter(|name| !name.is_empty())
+        .map(str::to_string)
 }

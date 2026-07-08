@@ -16,6 +16,8 @@ pub struct MediaRedundancyItem {
     pub cloud_path: String,
     pub mime_type: String,
     pub kind: String,
+    pub safe_to_delete: bool,
+    pub reference_hits: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -29,13 +31,8 @@ pub struct MediaRedundancyReport {
     pub unused_image_count: u32,
     pub unused_video_count: u32,
     pub stale_reference_count: u32,
+    pub safe_unused_count: u32,
+    pub suspect_unused_count: u32,
     pub unused_items: Vec<MediaRedundancyItem>,
 }
 
-pub const CONTENT_COLLECTIONS: &[&str] = &[
-    crate::cloud::CATEGORIES_COLLECTION,
-    crate::cloud::PROJECTS_COLLECTION,
-    crate::cloud::MATERIAL_CARDS_COLLECTION,
-    crate::cloud::MATERIAL_DETAILS_COLLECTION,
-    crate::cloud::HOME_SETTINGS_COLLECTION,
-];

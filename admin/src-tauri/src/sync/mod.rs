@@ -2,9 +2,7 @@ mod media_audit;
 mod refs;
 mod types;
 
-pub use types::{
-    MediaCleanupResult, MediaRedundancyReport, CONTENT_COLLECTIONS,
-};
+pub use types::{MediaCleanupResult, MediaRedundancyReport};
 
 pub fn analyze_media_redundancy(profile_id: &str) -> Result<MediaRedundancyReport, String> {
     media_audit::analyze_media_redundancy(profile_id)
