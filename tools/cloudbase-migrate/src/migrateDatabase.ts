@@ -22,19 +22,24 @@ export function createClients(cfg: MigrateConfig): MigrateClients {
   return { oldApp, newApp, config: cfg }
 }
 
-/** 自动发现集合名（来源环境） */
+/** 自动发现集合名（来源环境），并与内置列表合并，避免漏掉 home_settings 等 */
 async function resolveCollections(clients: MigrateClients, logger: Logger): Promise<string[]> {
+  const names = new Set<string>(FALLBACK_COLLECTIONS)
   try {
-    const names = await listAllCollections(clients.config, clients.config.oldEnvId)
-    if (names.length > 0) {
-      logger.info(`自动发现 ${names.length} 个集合`, { collections: names })
-      return names
+    const discovered = await listAllCollections(clients.config, clients.config.oldEnvId)
+    for (const name of discovered) {
+      names.add(name)
+    }
+    if (discovered.length > 0) {
+      logger.info(`自动发现 ${discovered.length} 个集合`, { collections: [...names] })
+    } else {
+      logger.warn('ListCollections 返回空列表，使用内置集合列表')
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     logger.warn(`ListCollections 失败，使用内置集合列表: ${message}`)
   }
-  return [...FALLBACK_COLLECTIONS]
+  return [...names].sort((a, b) => a.localeCompare(b))
 }
 
 /** 迁移全部数据库集合 */

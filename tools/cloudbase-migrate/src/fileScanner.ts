@@ -80,3 +80,49 @@ export function transformDocument<T extends Record<string, unknown>>(
 ): T {
   return replaceCloudFileIds(cloneJson(doc), mapping) as T
 }
+
+/** 清除仍指向旧环境的 cloud:// 引用（媒体迁移失败时避免阻断整份文档） */
+export function clearOldEnvFileIds(value: unknown, oldEnvId: string): unknown {
+  if (!oldEnvId) return value
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (isCloudFileId(trimmed) && trimmed.includes(oldEnvId)) {
+      return null
+    }
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => clearOldEnvFileIds(item, oldEnvId))
+      .filter((item) => !isEmptyMediaSlot(item))
+  }
+
+  if (value !== null && typeof value === 'object') {
+    const source = value as Record<string, unknown>
+    const next: Record<string, unknown> = {}
+    for (const [key, nested] of Object.entries(source)) {
+      const cleaned = clearOldEnvFileIds(nested, oldEnvId)
+      if (cleaned !== null) {
+        next[key] = cleaned
+      }
+    }
+    return next
+  }
+
+  return value
+}
+
+function isEmptyMediaSlot(value: unknown): boolean {
+  if (value === null) return true
+  if (typeof value !== 'object' || Array.isArray(value)) return false
+  const obj = value as Record<string, unknown>
+  for (const key of ['video', 'image', 'cover', 'src']) {
+    if (!(key in obj)) continue
+    const field = obj[key]
+    if (field === null || field === undefined) return true
+    if (typeof field === 'string' && !field.trim()) return true
+  }
+  return false
+}

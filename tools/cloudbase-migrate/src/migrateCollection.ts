@@ -1,8 +1,8 @@
-import { collectCloudFileIds, containsOldEnvFileId, transformDocument } from './fileScanner.js'
+import { collectCloudFileIds, containsOldEnvFileId, clearOldEnvFileIds, transformDocument } from './fileScanner.js'
 import { migrateFileIds, type FileIdCache } from './migrateFiles.js'
 import { Logger } from './logger.js'
 import type { CloudDocument, CollectionStats, FileStats, MigrateClients } from './types.js'
-import { upsertDocument } from './utils.js'
+import { upsertDocument, normalizeDocumentId } from './utils.js'
 
 interface QueryBatch {
   data?: CloudDocument[]
@@ -69,19 +69,26 @@ export async function migrateCollection(
 
       const unresolved = fileIds.filter((id) => !mapping.has(id))
       if (unresolved.length > 0) {
-        stats.documentsFailed += 1
         errors.push(
-          `${collection}/${docId}: ${unresolved.length} 个 fileID 未迁移成功，已跳过写入`
+          `${collection}/${docId}: ${unresolved.length} 个 fileID 未迁移成功，已清空对应媒体后继续写入`
         )
-        continue
       }
 
-      const transformed = transformDocument(doc, mapping)
+      let transformed = transformDocument(doc, mapping) as CloudDocument
+      transformed = clearOldEnvFileIds(
+        transformed,
+        clients.config.oldEnvId
+      ) as CloudDocument
       if (containsOldEnvFileId(transformed, clients.config.oldEnvId)) {
         throw new Error('fileID 替换后仍含旧环境引用')
       }
 
-      await upsertDocument(clients.config, clients.config.newEnvId, collection, transformed)
+      await upsertDocument(
+        clients.config,
+        clients.config.newEnvId,
+        collection,
+        normalizeDocumentId(transformed)
+      )
       stats.documentsSuccess += 1
     } catch (err) {
       stats.documentsFailed += 1

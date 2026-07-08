@@ -292,6 +292,21 @@ export async function deleteDocument(
   await gatewayRequest(cfg, envId, 'DELETE', documentPath(collection, id), 'DeleteDocument')
 }
 
+/** 将 SDK 返回的 _id（含 { $oid }）规范为字符串 */
+export function normalizeDocumentId<T extends Record<string, unknown>>(doc: T): T {
+  const id = doc._id
+  if (typeof id === 'string' && id) {
+    return doc
+  }
+  if (id && typeof id === 'object' && '$oid' in id) {
+    const oid = (id as { $oid?: string }).$oid
+    if (typeof oid === 'string' && oid) {
+      return { ...doc, _id: oid }
+    }
+  }
+  return doc
+}
+
 /** 写入文档（保留 _id 与系统字段；Gateway Insert / Update） */
 export async function upsertDocument(
   cfg: MigrateConfig,
@@ -299,12 +314,13 @@ export async function upsertDocument(
   collection: string,
   doc: Record<string, unknown>
 ): Promise<'inserted' | 'updated'> {
-  const id = doc._id
+  const normalized = normalizeDocumentId(doc)
+  const id = normalized._id
   if (typeof id !== 'string' || !id) {
     throw new Error('文档缺少 _id，无法写入')
   }
 
-  const { _id, ...rest } = doc
+  const { _id, ...rest } = normalized
   const patchBody = JSON.stringify({ data: { $set: rest } })
 
   try {
@@ -318,7 +334,7 @@ export async function upsertDocument(
     )
     return 'updated'
   } catch {
-    const insertBody = JSON.stringify({ data: [doc] })
+    const insertBody = JSON.stringify({ data: [normalized] })
     await gatewayRequest(
       cfg,
       envId,
